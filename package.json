@@ -1,0 +1,22 @@
+{
+  "name": "statistics-template",
+  "version": "8.0.1",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "nodemon backend/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "better-sqlite3": "^12.8.0",
+    "express": "^4.21.2",
+    "mongodb": "^6.15.0",
+    "mysql2": "^3.20.0",
+    "neo4j-driver": "^6.0.1",
+    "nodemon": "^3.1.9"
+  },
+  "remember-Neo4jOlderDriver": "5.28.1"
+}

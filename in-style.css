@@ -1,0 +1,51 @@
+body {
+  font-size: 18px !important;
+  background-color: #efe9d3 !important;
+}
+
+body.bigBottomPad {
+  padding-bottom: 2000px;
+}
+
+body.with-menu {
+  margin-top: 90px !important;
+}
+
+p,
+pre {
+  line-height: 150%;
+}
+
+.right {
+  text-align: right;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-bottom: 3px;
+  margin-top: 20px !important;
+}
+
+p {
+  margin-top: 0;
+}
+
+main {
+  padding-bottom: 30px;
+}
+
+td.right:nth-child(1) {
+  width: 1px;
+}
+
+table {
+  border: 1px solid #000;
+}
+
+label.dropdown+label.dropdown {
+  margin-top: -20px !important;
+}
