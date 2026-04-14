@@ -1,58 +1,87 @@
-import dbInfoOk, { displayDbNotOkText } from "./helpers/dbInfoOk.js";
 import { income, ages, electionResults } from "./dataLoader.js";
-import { getCombinedData } from "./dataProcessor.js";
+import { groupByKommun, average } from "./utils.js";
 
-if (!dbInfoOk) {
-    displayDbNotOkText();
-    return;
+// CLEAN NEO4J DATA
+function cleanElectionData(raw) {
+  if (!raw) {
+    console.error("❌ electionResults is undefined/null");
+    return [];
+  }
+
+  // Case 1: Already an array
+  if (Array.isArray(raw)) {
+    return raw.map(item => {
+      let node = item.n || item;
+      let props = node.properties || node;
+
+      return {
+        kommun: props.kommun,
+        parti: props.parti,
+        roster2018: Number(props.roster2018) || 0,
+        roster2022: Number(props.roster2022) || 0
+      };
+    });
+  }
+
+  // Case 2: Neo4j driver format
+  if (raw.records) {
+    return raw.records.map(r => {
+      let props = r._fields[0].properties;
+
+      return {
+        kommun: props.kommun,
+        parti: props.parti,
+        roster2018: Number(props.roster2018) || 0,
+        roster2022: Number(props.roster2022) || 0
+      };
+    });
+  }
+
+  console.error("❌ Unknown electionResults format:", raw);
+  return [];
 }
 
-// =====================
-// GET CLEAN COMBINED DATA
-// =====================
+// BUILD RAW DATA
+function buildRawData() {
+  let resultsArray = cleanElectionData(electionResults);
 
-let combined = getCombinedData();   // ⭐ replaces ALL your manual cleaning code
+  return resultsArray.map(r => {
+    let incomeData = income.find(i => i.kommun === r.kommun);
+    let ageData = ages.find(a => a.kommun === r.kommun);
 
-console.log("FINAL CLEANED DATA:", combined);
+    return {
+      kommun: r.kommun,
+      parti: r.parti,
+      roster2018: r.roster2018,
+      roster2022: r.roster2022,
+      voteChange: r.roster2022 - r.roster2018,
+      income: Number(incomeData?.value) || 0,
+      age: Number(ageData?.value) || 0
+    };
+  });
+}
 
-// =====================
-// PAGE CONTENT
-// =====================
+// FINAL CLEAN DATA
+export function getCombinedData() {
+  let rawData = buildRawData();
 
-addMdToPage(`# 👥 Ålder & Inkomst vs Röstförändring`);
+  if (!rawData.length) {
+    console.warn("⚠️ No data available");
+    return [];
+  }
 
-// =====================
-// CHART 1 — AGE
-// =====================
+  let grouped = groupByKommun(rawData);
 
-drawGoogleChart({
-    type: "ScatterChart",
-    data: [
-        ["Ålder", "Röstförändring"],
-        ...combined.map(d => [d.age, d.avgVoteChange])
-    ],
-    options: {
-        title: "📊 Hur påverkar ålder röstförändring?",
-        hAxis: { title: "Ålder" },
-        vAxis: { title: "Röstförändring" }
-    }
-});
+  let finalData = Object.keys(grouped).map(kommun => {
+    let rows = grouped[kommun];
 
-// =====================
-// CHART 2 — INCOME
-// =====================
+    return {
+      kommun,
+      avgVoteChange: average(rows.map(r => r.voteChange)),
+      income: rows[0].income,
+      age: rows[0].age
+    };
+  });
 
-drawGoogleChart({
-    type: "ScatterChart",
-    data: [
-        ["Inkomst", "Röstförändring"],
-        ...combined.map(d => [d.income, d.avgVoteChange])
-    ],
-    options: {
-        title: "💰 Hur påverkar inkomst röstförändring?",
-        hAxis: { title: "Inkomst" },
-        vAxis: { title: "Röstförändring" }
-    }
-});
-
-addMdToPage(`### Slutsats: Ålder och inkomst har svag påverkan.`);
+  return finalData;
+}
