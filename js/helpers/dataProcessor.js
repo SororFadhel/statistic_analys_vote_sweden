@@ -1,9 +1,7 @@
 import { income, ages, electionResults } from "./dataLoader.js";
+import { groupByKommun, average } from "./utils.js";
 
-// DEBUG (VERY IMPORTANT)
-console.log("electionResults:", electionResults);
-
-// Neo4j structure
+// NEO4J FORMAT
 let resultsArray = [];
 
 if (Array.isArray(electionResults)) {
@@ -14,14 +12,11 @@ if (Array.isArray(electionResults)) {
   console.error("❌ Wrong electionResults format:", electionResults);
 }
 
-// BUILD COMBINED DATASET
-export function getCombinedData() {
+console.log("✅ Cleaned election data:", resultsArray);
 
-  if (!resultsArray.length) {
-    console.warn("⚠️ No election data available");
-    return [];
-  }
 
+// BUILD RAW COMBINED DATA
+function buildRawData() {
   return resultsArray.map(r => {
 
     let incomeData = income.find(i => i.kommun === r.kommun);
@@ -40,4 +35,39 @@ export function getCombinedData() {
       age: ageData?.value || 0
     };
   });
+}
+
+// FINAL CLEAN DATA
+export function getCombinedData() {
+
+  let rawData = buildRawData();
+
+  if (!rawData.length) {
+    console.warn("⚠️ No data available");
+    return [];
+  }
+
+  // GROUP BY KOMMUN
+  let grouped = groupByKommun(rawData);
+
+  // BUILD FINAL DATASET (1 row per kommun)
+  let finalData = Object.keys(grouped).map(kommun => {
+
+    let rows = grouped[kommun];
+
+    return {
+      kommun,
+
+      // average vote change across parties
+      avgVoteChange: average(rows.map(r => r.voteChange)),
+
+      // take same value (they are same per kommun anyway)
+      income: rows[0].income,
+      age: rows[0].age
+    };
+  });
+
+  console.log("✅ Final combined data:", finalData);
+
+  return finalData;
 }
