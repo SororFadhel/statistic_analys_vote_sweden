@@ -9,5 +9,6 @@ createMenu('Sweden Elections Analysis', [
 
   { name: 'Hypothesis Testing', script: 'hypothesis.js' },
   { name: 'Data Sources', script: 'sources.js' },
-  { name: 'Conclusion', script: 'conclusion.js' }
+  { name: 'Conclusion', script: 'conclusion.js' },
+  { name: 'Startpage', script: 'startpage.js' }
 ]);

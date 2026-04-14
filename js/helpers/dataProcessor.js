@@ -1,33 +1,28 @@
 import { income, ages, electionResults } from "./dataLoader.js";
 
-export function buildKommunData() {
+// Fix Neo4j structure
+let resultsArray = [];
 
-  // ✅ ADD IT HERE
-  console.log("electionResults:", electionResults);
-  console.log("isArray:", Array.isArray(electionResults));
+if (Array.isArray(electionResults)) {
+  resultsArray = electionResults;
+} else if (electionResults?.records) {
+  resultsArray = electionResults.records.map(r => r._fields[0].properties);
+} else {
+  console.error("Wrong electionResults format:", electionResults);
+}
 
-  let results = Array.isArray(electionResults) ? electionResults : [];
-
-  let incomeMap = {};
-  income.forEach(x => incomeMap[x.kommun] = x);
-
-  let ageMap = {};
-  ages.forEach(x => ageMap[x.kommun] = x);
-
-  return results.map(e => {
-    let data = e.n ? e.n : e;
-
-    let inc = incomeMap[data.kommun];
-    let age = ageMap[data.kommun] = ageMap[data.kommun];
+// Combine ALL data
+export function getCombinedData() {
+  return resultsArray.map(r => {
+    let incomeData = income.find(i => i.kommun === r.kommun);
+    let ageData = ages.find(a => a.kommun === r.kommun);
 
     return {
-      kommun: data.kommun,
-      parti: data.parti,
-      votes2018: data.roster2018,
-      votes2022: data.roster2022,
-      voteChange: data.roster2022 - data.roster2018,
-      income: inc?.medelInkomst2022,
-      age: age?.medelalderAr2022
+      kommun: r.kommun,
+      parti: r.parti,
+      voteChange: (r.roster2022 || 0) - (r.roster2018 || 0),
+      income: incomeData?.value || 0,
+      age: ageData?.value || 0
     };
-  }).filter(x => x.income && x.age);
+  });
 }

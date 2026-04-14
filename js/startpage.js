@@ -1,5 +1,4 @@
-import dbInfoOk, { displayDbNotOkText } from "./dbInfoOk.js";
-import { countyInfo, geoData, income, ages, electionResults } from "./helpers/dataLoader.js";
+import dbInfoOk, { displayDbNotOkText } from "./helpers/dbInfoOk.js";
 
 addMdToPage(`
   ## Kom igång!
