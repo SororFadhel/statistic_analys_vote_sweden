@@ -58,7 +58,7 @@ if (!dbInfoOk) {
   ## 📊 Data Preview
   `);
 
-  // ✅ ALSO add safety check
+  //add safety check
   if (Array.isArray(countyInfo)) {
     tableFromData({
       data: countyInfo.slice(0, 5)
