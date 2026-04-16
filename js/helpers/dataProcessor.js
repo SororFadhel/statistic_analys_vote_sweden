@@ -2,56 +2,129 @@ import { income, ages, electionResults } from "./dataLoader.js";
 import { groupByKommun, average } from "./utils.js";
 
 
-// NEO4J DATA
-function cleanElectionData(raw) {
-  if (!raw) {
-    console.error("❌ electionResults is undefined/null");
-    return [];
-  }
+// ===============================
+// ⭐ Kommun Normalization
+// ===============================
+function normalizeKommun(name) {
+  if (!name) return "";
+  return String(name)
+    .toLowerCase()
+    .replace(" kommun", "")
+    .replace("s kommun", "")
+    .replace(" stad", "")
+    .replace(/s$/, "")       // remove trailing s
+    .normalize("NFD")        // remove accents
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
 
-  // Case 1: Already an array
+
+
+// ===============================
+// ⭐ Safe Number Conversion
+// ===============================
+function fixNumber(value) {
+  if (value === null || value === undefined) return 0;
+
+  let cleaned = String(value)
+    .replace(/\s/g, "")
+    .replace(",", ".")
+    .replace(/[^0-9.-]/g, "");
+
+  let num = Number(cleaned);
+  return isNaN(num) ? 0 : num;
+}
+
+
+// ===============================
+// ⭐ Clean Neo4j Election Data
+// ===============================
+function cleanElectionData(raw) {
+  if (!raw) return [];
+
   if (Array.isArray(raw)) {
     return raw.map(item => {
-      let node = item.n || item;                 // handle Neo4j wrapper
-      let props = node.properties || node;       // handle properties
+      let node = item.n || item;
+      let props = node.properties || node;
 
       return {
-        kommun: props.kommun,
+        kommun: normalizeKommun(props.kommun),
         parti: props.parti,
-        roster2018: Number(props.roster2018) || 0,
-        roster2022: Number(props.roster2022) || 0
+        roster2018: fixNumber(props.roster2018),
+        roster2022: fixNumber(props.roster2022)
       };
     });
   }
 
-  // Case 2: Neo4j driver format (records)
   if (raw.records) {
     return raw.records.map(r => {
       let props = r._fields[0].properties;
 
       return {
-        kommun: props.kommun,
+        kommun: normalizeKommun(props.kommun),
         parti: props.parti,
-        roster2018: Number(props.roster2018) || 0,
-        roster2022: Number(props.roster2022) || 0
+        roster2018: fixNumber(props.roster2018),
+        roster2022: fixNumber(props.roster2022)
       };
     });
   }
 
-  console.error("❌ Unknown electionResults format:", raw);
   return [];
 }
 
 
-// BUILD RAW DATA (JOIN ALL SOURCES)
+// ===============================
+// ⭐ Extract Latest Age (ANY row for kommun)
+// ===============================
+function extractAge(ageRows) {
+  if (!ageRows || ageRows.length === 0) return 0;
+
+  // Pick the row with the latest available year
+  let latest = ageRows[0];
+
+  let value =
+    latest.medelalderAr2022 ??
+    latest.medelalderAr2021 ??
+    latest.medelalderAr2020 ??
+    latest.medelalderAr2019 ??
+    latest.medelalderAr2018 ??
+    0;
+
+  return fixNumber(value);
+}
+
+
+// ===============================
+// ⭐ Extract Latest Income (ANY row for kommun)
+// ===============================
+function extractIncome(incomeRows) {
+  if (!incomeRows || incomeRows.length === 0) return 0;
+
+  // Pick ANY row for the kommun (you said ignore gender)
+  let row = incomeRows[0];
+
+  let value =
+    row.medelInkomst2022 ??
+    row.medelInkomst2021 ??
+    row.medelInkomst2020 ??
+    row.medelInkomst2019 ??
+    row.medelInkomst2018 ??
+    0;
+
+  return fixNumber(value);
+}
+
+
+
+// ===============================
+// ⭐ Build Raw Combined Rows
+// ===============================
 function buildRawData() {
   let resultsArray = cleanElectionData(electionResults);
 
-  console.log("✅ Cleaned election data:", resultsArray);
-
   return resultsArray.map(r => {
-    let incomeData = income.find(i => i.kommun === r.kommun);
-    let ageData = ages.find(a => a.kommun === r.kommun);
+    let incomeRows = income.filter(i => normalizeKommun(i.kommun) === r.kommun);
+    let ageRows = ages.filter(a => normalizeKommun(a.kommun) === r.kommun);
 
     return {
       kommun: r.kommun,
@@ -60,46 +133,33 @@ function buildRawData() {
       roster2018: r.roster2018,
       roster2022: r.roster2022,
 
-      voteChange: r.roster2022 - r.roster2018,
+      voteChange: fixNumber(r.roster2022) - fixNumber(r.roster2018),
 
-      income: Number(incomeData?.medianInkomst2022) || 0,
-      age: Number(ageData?.medelalderAr2022) || 0
+      income: extractIncome(incomeRows),
+      age: extractAge(ageRows)
     };
   });
 }
 
 
-// FINAL CLEAN DATA
+// ===============================
+// ⭐ Final Combined Dataset
+// ===============================
 export function getCombinedData() {
-
   let rawData = buildRawData();
 
-  if (!rawData.length) {
-    console.warn("⚠️ No data available");
-    return [];
-  }
+  if (!rawData.length) return [];
 
-  // GROUP BY KOMMUN
   let grouped = groupByKommun(rawData);
 
-  // BUILD FINAL DATASET
-  let finalData = Object.keys(grouped).map(kommun => {
-
+  return Object.keys(grouped).map(kommun => {
     let rows = grouped[kommun];
 
     return {
       kommun,
-
-      // average vote change across parties
-      avgVoteChange: average(rows.map(r => r.voteChange)),
-
-      // same per kommun
-      income: rows[0].income,
-      age: rows[0].age
+      avgVoteChange: fixNumber(average(rows.map(r => r.voteChange))),
+      income: fixNumber(rows[0].income),
+      age: fixNumber(rows[0].age)
     };
   });
-
-  console.log("✅ Final combined data:", finalData);
-
-  return finalData;
 }
