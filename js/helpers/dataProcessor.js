@@ -62,8 +62,8 @@ function buildRawData() {
 
       voteChange: r.roster2022 - r.roster2018,
 
-      income: Number(incomeData?.value) || 0,
-      age: Number(ageData?.value) || 0
+      income: Number(incomeData?.medianInkomst2022) || 0,
+      age: Number(ageData?.medelalderAr2022) || 0
     };
   });
 }
