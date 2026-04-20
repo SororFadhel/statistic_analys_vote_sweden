@@ -1,0 +1,291 @@
+lanKod;lan;kommunKod;kommun
+1;Stockholms län;114;Upplands Väsby
+1;Stockholms län;115;Vallentuna
+1;Stockholms län;117;Österåker
+1;Stockholms län;120;Värmdö
+1;Stockholms län;123;Järfälla
+1;Stockholms län;125;Ekerö
+1;Stockholms län;126;Huddinge
+1;Stockholms län;127;Botkyrka
+1;Stockholms län;128;Salem
+1;Stockholms län;136;Haninge
+1;Stockholms län;138;Tyresö
+1;Stockholms län;139;Upplands-Bro
+1;Stockholms län;140;Nykvarn
+1;Stockholms län;160;Täby
+1;Stockholms län;162;Danderyd
+1;Stockholms län;163;Sollentuna
+1;Stockholms län;180;Stockholm
+1;Stockholms län;181;Södertälje
+1;Stockholms län;182;Nacka
+1;Stockholms län;183;Sundbyberg
+1;Stockholms län;184;Solna
+1;Stockholms län;186;Lidingö
+1;Stockholms län;187;Vaxholm
+1;Stockholms län;188;Norrtälje
+1;Stockholms län;191;Sigtuna
+1;Stockholms län;192;Nynäshamn
+3;Uppsala län;305;Håbo
+3;Uppsala län;319;Älvkarleby
+3;Uppsala län;330;Knivsta
+3;Uppsala län;331;Heby
+3;Uppsala län;360;Tierp
+3;Uppsala län;380;Uppsala
+3;Uppsala län;381;Enköping
+3;Uppsala län;382;Östhammar
+4;S�dermanlands län;428;Vingåker
+4;S�dermanlands län;461;Gnesta
+4;S�dermanlands län;480;Nyköping
+4;S�dermanlands län;481;Oxelösund
+4;S�dermanlands län;482;Flen
+4;SSdermanlands län;483;Katrineholm
+4;SSdermanlands län;484;Eskilstuna
+4;SSdermanlands län;486;Strängns
+4;SSdermanlands län;488;Trosa
+5;�sterg�tlands län;509;Ödeshög
+5;�sterg�tlands län;512;Ydre
+5;�sterg�tlands län;513;Kinda
+5;�sterg�tlands län;560;Boxholm
+5;�sterg�tlands län;561;Åtvidaberg
+5;�sterg�tlands län;562;Finspång
+5;�sterg�tlands län;563;Valdemarsvik
+5;�sterg�tlands län;580;Linköping
+5;�sterg�tlands län;581;Norrköping
+5;�sterg�tlands län;582;Söderköping
+5;�sterg�tlands län;583;Motala
+5;�sterg�tlands län;584;Vadstena
+5;�sterg�tlands län;586;Mjölby
+6;J�nk�pings län;604;Aneby
+6;J�nk�pings län;617;Gnosjö
+6;J�nk�pings län;642;Mullsjö
+6;J�nk�pings län;643;Habo
+6;J�nk�pings län;662;Gislaved
+6;J�nk�pings län;665;Vaggeryd
+6;J�nk�pings län;680;Jönköping
+6;J�nk�pings län;682;Nässjö
+6;J�nk�pings län;683;Värnamo
+6;J�nk�pings län;684;Sävsjö
+6;J�nk�pings län;685;Vetlanda
+6;J�nk�pings län;686;Eksjö
+6;J�nk�pings län;687;Tranås
+7;Kronobergs län;760;Uppvidinge
+7;Kronobergs län;761;Lessebo
+7;Kronobergs län;763;Tingsryd
+7;Kronobergs län;764;Alvesta
+7;Kronobergs län;765;Älmhult
+7;Kronobergs län;767;Markaryd
+7;Kronobergs län;780;Växjö
+7;Kronobergs län;781;Ljungby
+8;Kalmar län;821;Högsby
+8;Kalmar län;834;Torsås
+8;Kalmar län;840;Mörbylånga
+8;Kalmar län;860;Hultsfred
+8;Kalmar län;861;Mönsterås
+8;Kalmar län;862;Emmaboda
+8;Kalmar län;880;Kalmar
+8;Kalmar län;881;Nybro
+8;Kalmar län;882;Oskarshamn
+8;Kalmar län;883;V�stervik
+8;Kalmar län;884;Vimmerby
+8;Kalmar län;885;Borgholm
+9;Gotlands län;980;Gotland
+10;Blekinge län;1060;Olofström
+10;Blekinge län;1080;Karlskrona
+10;Blekinge län;1081;Ronneby
+10;Blekinge län;1082;Karlshamn
+10;Blekinge län;1083;Sölvesborg
+12;Skåne län;1214;Svalöv
+12;Skåne län;1230;Staffanstorp
+12;Skåne län;1231;Burlöv
+12;Skåne län;1233;Vellinge
+12;Skåne län;1256;Östra Göinge
+12;Skåne län;1257;Örkelljunga
+12;Skåne län;1260;Bjuv
+12;Skåne län;1261;Kävlinge
+12;Skåne län;1262;Lomma
+12;Skåne län;1263;Svedala
+12;Skåne län;1264;Skurup
+12;Skåne län;1265;Sjöbo
+12;Skåne län;1266;Hörby
+12;Skåne län;1267;Höör
+12;Skåne län;1270;Tomelilla
+12;Skåne län;1272;Bromölla
+12;Skåne län;1273;Osby
+12;Skåne län;1275;Perstorp
+12;Skåne län;1276;Klippan
+12;Skåne län;1277;Åstorp
+12;Skåne län;1278;Båstad
+12;Skåne län;1280;Malmö
+12;Skåne län;1281;Lund
+12;Skåne län;1282;Landskrona
+12;Skåne län;1283;Helsingborg
+12;Skåne län;1284;Höganäs
+12;Skåne län;1285;Eslöv
+12;Skåne län;1286;Ystad
+12;Skåne län;1287;Trelleborg
+12;Skåne län;1290;Kristianstad
+12;Skåne län;1291;Simrishamn
+12;Skåne län;1292;Ängelholm
+12;Skåne län;1293;Hässleholm
+13;Hallands län;1315;Hylte
+13;Hallands län;1380;Halmstad
+13;Hallands län;1381;Laholm
+13;Hallands län;1382;Falkenberg
+13;Hallands län;1383;Varberg
+13;Hallands län;1384;Kungsbacka
+14;Västra Götalands län;1401;Härryda
+14;Västra Götalands län;1402;Partille
+14;Västra Götalands län;1407;Öckerö
+14;Västra Götalands län;1415;Stenungsund
+14;Västra Götalands län;1419;Tjörn
+14;Västra Götalands län;1421;Orust
+14;Västra Götalands län;1427;Sotenäs
+14;Västra Götalands län;1430;Munkedal
+14;Västra Götalands län;1435;Tanum
+14;Västra Götalands län;1438;Dals-Ed
+14;Västra Götalands län;1439;Färgelanda
+14;Västra Götalands län;1440;Ale
+14;Västra Götalands län;1441;Lerum
+14;Västra Götalands län;1442;Vårgårda
+14;Västra Götalands län;1443;Bollebygd
+14;Västra Götalands län;1444;Grästorp
+14;Västra Götalands län;1445;Essunga
+14;Västra Götalands län;1446;Karlsborg
+14;Västra Götalands län;1447;Gullspång
+14;Västra Götalands län;1452;Tranemo
+14;Västra Götalands län;1460;Bengtsfors
+14;Västra Götalands län;1461;Mellerud
+14;Västra Götalands län;1462;Lilla Edet
+14;Västra Götalands län;1463;Mark
+14;Västra Götalands län;1465;Svenljunga
+14;Västra Götalands län;1466;Herrljunga
+14;Västra Götalands län;1470;Vara
+14;Västra Götalands län;1471;Götene
+14;Västra Götalands län;1472;Tibro
+14;Västra Götalands län;1473;Töreboda
+14;Västra Götalands län;1480;Göteborg
+14;Västra Götalands län;1481;Mölndal
+14;Västra Götalands län;1482;Kungälv
+14;Västra Götalands län;1484;Lysekil
+14;Västra Götalands län;1485;Uddevalla
+14;Västra Götalands län;1486;Strömstad
+14;Västra Götalands län;1487;Vänersborg
+14;Västra Götalands län;1488;Trollhättan
+14;Västra Götalands län;1489;Alingsås
+14;Västra Götalands län;1490;Borås
+14;Västra Götalands län;1491;Ulricehamn
+14;Västra Götalands län;1492;Åmål
+14;Västra Götalands län;1493;Mariestad
+14;Västra Götalands län;1494;Lidköping
+14;Västra Götalands län;1495;Skara
+14;Västra Götalands län;1496;Skövde
+14;Västra Götalands län;1497;Hjo
+14;Västra Götalands län;1498;Tidaholm
+14;Västra Götalands län;1499;Falköping
+17;Värmlands län;1715;Kil
+17;Värmlands län;1730;Eda
+17;Värmlands län;1737;Torsby
+17;Värmlands län;1760;Storfors
+17;Värmlands län;1761;Hammarö
+17;Värmlands län;1762;Munkfors
+17;Värmlands län;1763;Forshaga
+17;Värmlands län;1764;Grums
+17;Värmlands län;1765;Årjäng
+17;Värmlands län;1766;Sunne
+17;Värmlands län;1780;Karlstad
+17;Värmlands län;1781;Kristinehamn
+17;Värmlands län;1782;Filipstad
+17;Värmlands län;1783;Hagfors
+17;Värmlands län;1784;Arvika
+17;Värmlands län;1785;Säffle
+18;Örebro län;1814;Lekeberg
+18;Örebro län;1860;Laxå
+18;Örebro län;1861;Hallsberg
+18;Örebro län;1862;Degerfors
+18;Örebro län;1863;Hällefors
+18;Örebro län;1864;Ljusnarsberg
+18;Örebro län;1880;Örebro
+18;Örebro län;1881;Kumla
+18;Örebro län;1882;Askersund
+18;Örebro län;1883;Karlskoga
+18;Örebro län;1884;Nora
+18;Örebro län;1885;Lindesberg
+19;Västmanlands län;1904;Skinnskatteberg
+19;Västmanlands län;1907;Surahammar
+19;Västmanlands län;1960;Kungsör
+19;Västmanlands län;1961;Hallstahammar
+19;Västmanlands län;1962;Norberg
+19;Västmanlands län;1980;Västerås
+19;Västmanlands län;1981;Sala
+19;Västmanlands län;1982;Fagersta
+19;Västmanlands län;1983;Köping
+19;Västmanlands län;1984;Arboga
+20;Dalarnas län;2021;Vansbro
+20;Dalarnas län;2023;Malung-Sälen
+20;Dalarnas län;2026;Gagnef
+20;Dalarnas län;2029;Leksand
+20;Dalarnas län;2031;Rättvik
+20;Dalarnas län;2034;Orsa
+20;Dalarnas län;2039;Älvdalen
+20;Dalarnas län;2061;Smedjebacken
+20;Dalarnas län;2062;Mora
+20;Dalarnas län;2080;Falun
+20;Dalarnas län;2081;Borlänge
+20;Dalarnas län;2082;Säter
+20;Dalarnas län;2083;Hedemora
+20;Dalarnas län;2084;Avesta
+20;Dalarnas län;2085;Ludvika
+21;Gävleborgs län;2101;Ockelbo
+21;Gävleborgs län;2104;Hofors
+21;Gävleborgs län;2121;Ovanåker
+21;Gävleborgs län;2132;Nordanstig
+21;Gävleborgs län;2161;Ljusdal
+21;Gävleborgs län;2180;Gävle
+21;Gävleborgs län;2181;Sandviken
+21;Gävleborgs län;2182;Söderhamn
+21;Gävleborgs län;2183;Bollnäs
+21;Gävleborgs län;2184;Hudiksvall
+22;Västernorrlands län;2260;Ånge
+22;Västernorrlands län;2262;Timrå
+22;Västernorrlands län;2280;Härnösand
+22;Västernorrlands län;2281;Sundsvall
+22;Västernorrlands län;2282;Kramfors
+22;Västernorrlands län;2283;Sollefteå
+22;Västernorrlands län;2284;Örnsköldsvik
+23;Jämtlands län;2303;Ragunda
+23;Jämtlands län;2305;Bräcke
+23;Jämtlands län;2309;Krokom
+23;Jämtlands län;2313;Strömsund
+23;Jämtlands län;2321;Åre
+23;Jämtlands län;2326;Berg
+23;Jämtlands län;2361;Härjedalen
+23;Jämtlands län;2380;Östersund
+24;Västerbottens län;2401;Nordmaling
+24;Västerbottens län;2403;Bjurholm
+24;Västerbottens län;2404;Vindeln
+24;Västerbottens län;2409;Robertsfors
+24;Västerbottens län;2417;Norsjö
+24;Västerbottens län;2418;Malå
+24;Västerbottens län;2421;Storuman
+24;Västerbottens län;2422;Sorsele
+24;Västerbottens län;2425;Dorotea
+24;Västerbottens län;2460;Vännäs
+24;Västerbottens län;2462;Vilhelmina
+24;Västerbottens län;2463;Åsele
+24;Västerbottens län;2480;Umeå
+24;Västerbottens län;2481;Lycksele
+24;Västerbottens län;2482;Skellefteå
+25;Norrbottens län;2505;Arvidsjaur
+25;Norrbottens län;2506;Arjeplog
+25;Norrbottens län;2510;Jokkmokk
+25;Norrbottens län;2513;Överkalix
+25;Norrbottens län;2514;Kalix
+25;Norrbottens län;2518;Övertorneå
+25;Norrbottens län;2521;Pajala
+25;Norrbottens län;2523;Gällivare
+25;Norrbottens län;2560;Älvsbyn
+25;Norrbottens län;2580;Luleå
+25;Norrbottens län;2581;Piteå
+25;Norrbottens län;2582;Boden
+25;Norrbottens län;2583;Haparanda
+25;Norrbottens län;2584;Kiruna

@@ -23,5 +23,6 @@ export let electionResults = await dbQuery('MATCH (n:Partiresultat) RETURN n');
 
 // LOAD UNEMPLOYEMENT DATA FROM CSV
 export let unemployement = await csvLoad('arbetsloshetByLan.csv');
+export let lanKommun = await csvLoad('lanKommun.csv');
 
-console.log(unemployement)
+console.log(lanKommun)
