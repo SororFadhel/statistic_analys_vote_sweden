@@ -3,42 +3,73 @@ import { countyInfo } from "./helpers/dataLoader.js";
 
 
 addMdToPage(`
-# 🇸🇪 Sweden’s Changing Political Landscape (2018 → 2022)
+# 🇸🇪 Sveriges föränderliga politiska landskap (2018 → 2022)
 
-## 🧠 A Data-Driven Story
+## 🧠 En datadriven analys
 
-Between the Swedish parliamentary elections of 2018 and 2022, something changed.
+Mellan riksdagsvalet 2018 och 2022 skedde märkbara förändringar mellan kommunerna.
 
-Some municipalities shifted politically.  
-Some parties gained support — others lost it.  
+Vissa regioner ändrade politisk inriktning, medan andra förblev stabila.
+Vissa partier fick stöd, medan andra tappade mark.
 
-But the key question is:
+Detta väcker en central fråga:
 
-## ❓ *Why did voting patterns change?*
+## ❓ Vad förklarar förändringar i röstningsmönster?
 
-Was it:
-- 💰 Income differences?
-- 👥 Age distribution?
-- 🌍 Geography and where people live?
+Är dessa förändringar kopplade till:
 
-Or something more complex?
+- 💰 Inkomstskillnader mellan kommuner?
+- 👥 Variationer i åldersfördelning?
+- 🌍 Geografisk plats och regionala egenskaper?
+
+Eller är mönstren mer komplexa?
 
 ---
 
-## 🎯 Purpose of This Project
+## 🎯 Studiens syfte
 
-In this project, we explore how **social and economic factors** may explain changes in voter behavior across Sweden.
+Syftet med detta projekt är att undersöka om **socioekonomiska och demografiska faktorer är kopplade till förändringar i röstningsbeteende** i hela Sverige.
 
-We combine data from multiple sources:
+Snarare än att bara beskriva resultat fokuserar analysen på på:
 
-- 🗳 Election results (2018 & 2022)
-- 💰 Income data per municipality
-- 👥 Age distribution
-- 🌍 Geographic information
+> 📊 Identifiera mönster, jämföra grupper och utvärdera statistiska samband.
 
-By connecting these datasets, we aim to uncover:
+---
 
-> 📊 Patterns, trends, and possible relationships between society and politics.
+## 🗂 Datakällor
+
+Analysen kombinerar flera datamängder:
+
+- 🗳 Valresultat (2018 och 2022)
+- 💰 Genomsnittlig inkomst per kommun
+- 👥 Åldersfördelning
+- 🌍 Geografisk information
+
+Dessa datamängder är integrerade på kommunnivå för att möjliggöra jämförelse och analys.
+
+---
+
+## 🔬 Analytiskt tillvägagångssätt
+
+Projektet följer en strukturerad statistisk process:
+
+1. **Deskriptiv analys**
+→ Identifiera mönster och fördelningar
+
+2. **Jämförande analys**
+→ Jämför olika grupper (t.ex. inkomstnivåer)
+
+3. **Hypotesprövning**
+→ Testa om observerade skillnader är statistiskt signifikanta
+
+4. **Korrelationsanalys**
+→ Mäta samband mellan variabler
+
+---
+
+## 🚀 Strukturen hos Analys
+
+Varje del av projektet bygger mot att besvara den huvudsakliga forskningsfrågan, och går från grundläggande utforskning till djupare statistisk utvärdering.
 
 ---
 
