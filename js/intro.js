@@ -30,7 +30,7 @@ Eller är mönstren mer komplexa?
 
 Syftet med detta projekt är att undersöka om **socioekonomiska och demografiska faktorer är kopplade till förändringar i röstningsbeteende** i hela Sverige.
 
-Snarare än att bara beskriva resultat fokuserar analysen på på:
+Snarare än att bara beskriva resultat fokuserar analysen på:
 
 > 📊 Identifiera mönster, jämföra grupper och utvärdera statistiska samband.
 

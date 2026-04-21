@@ -10,9 +10,10 @@ if (!dbInfoOk) {
 }
 else {
   addMdToPage(`
-  ### Starthjälp
-  * För att ge dig starthjälp med övningen visar vi nedan data från 4 olika databaser (varav två olika collections hämtade från MongoDB). Detta är datan du har tillgång till.
-  * När du tittat lite på datan (och kanske även på koden som hämtar den) kan du [läsa instruktionerna för övningen](#ovningsinstruktioner)!
+  # 📂 Databild – Översikt
+
+  Denna sida ger en översikt av de datamängder som används i analysen.
+  Syftet är att visa struktur, nivå (kommun/län) och exempelrader.
   `);
 
   addMdToPage(`
