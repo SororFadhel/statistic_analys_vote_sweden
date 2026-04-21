@@ -4,6 +4,7 @@
 // SQLITE
 dbQuery.use('counties-sqlite');
 export let countyInfo = await dbQuery('SELECT * FROM countyInfo');
+export let unemployement = await dbQuery('SELECT * FROM arbetsloshet_by_lan');
 
 // MYSQL
 dbQuery.use('geo-mysql');
@@ -22,7 +23,7 @@ dbQuery.use('riksdagsval-neo4j');
 export let electionResults = await dbQuery('MATCH (n:Partiresultat) RETURN n');
 
 // LOAD UNEMPLOYEMENT DATA FROM CSV
-export let unemployement = await csvLoad('arbetsloshetByLan.csv');
-export let lanKommun = await csvLoad('lanKommun.csv');
+//export let unemployement = await csvLoad('arbetsloshetByLan.csv');
+//export let lanKommun = await csvLoad('lanKommun.csv');
 
-console.log(lanKommun)
+//console.log(lanKommun)
