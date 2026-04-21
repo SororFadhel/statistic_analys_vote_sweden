@@ -4,6 +4,7 @@
 // SQLITE
 dbQuery.use('counties-sqlite');
 export let countyInfo = await dbQuery('SELECT * FROM countyInfo');
+export let unemployement = await dbQuery('SELECT * FROM arbetsloshet_by_lan');
 
 // MYSQL
 dbQuery.use('geo-mysql');
