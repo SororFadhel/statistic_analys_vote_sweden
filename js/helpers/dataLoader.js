@@ -5,14 +5,11 @@
 dbQuery.use('counties-sqlite');
 export let countyInfo = await dbQuery('SELECT * FROM countyInfo');
 export let unemployement = await dbQuery('SELECT * FROM arbetsloshet_by_lan');
+export let income = await dbQuery('SELECT * FROM income_clean');
 
 // MYSQL
 dbQuery.use('geo-mysql');
 export let geoData = await dbQuery('SELECT * FROM geoData ORDER BY latitude');
-
-// MONGODB (income)
-dbQuery.use('kommun-info-mongodb');
-export let income = await dbQuery.collection('incomeByKommun').find({});
 
 // MONGODB (age)
 dbQuery.use('kommun-info-mongodb');
