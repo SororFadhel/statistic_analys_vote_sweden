@@ -1,7 +1,6 @@
 import { income, ages, electionResults } from "./dataLoader.js";
 import { groupByKommun, average } from "./utils.js";
 
-
 // ===============================
 // ⭐ Kommun Normalization
 // ===============================
@@ -12,13 +11,11 @@ function normalizeKommun(name) {
     .replace(" kommun", "")
     .replace("s kommun", "")
     .replace(" stad", "")
-    .replace(/s$/, "")       // remove trailing s
-    .normalize("NFD")        // remove accents
+    .replace(/s$/, "")
+    .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
 }
-
-
 
 // ===============================
 // ⭐ Safe Number Conversion
@@ -35,9 +32,24 @@ function fixNumber(value) {
   return isNaN(num) ? 0 : num;
 }
 
+// ===============================
+// ⭐ Index Data (PERFORMANCE FIX)
+// ===============================
+function indexByKommun(arr) {
+  const map = {};
+  arr.forEach(row => {
+    const key = normalizeKommun(row.kommun);
+    if (!map[key]) map[key] = [];
+    map[key].push(row);
+  });
+  return map;
+}
+
+const incomeMap = indexByKommun(income);
+const ageMap = indexByKommun(ages);
 
 // ===============================
-// ⭐ Clean Neo4j Election Data
+// ⭐ Clean Election Data
 // ===============================
 function cleanElectionData(raw) {
   if (!raw) return [];
@@ -72,68 +84,68 @@ function cleanElectionData(raw) {
   return [];
 }
 
-
 // ===============================
-// ⭐ Extract Latest Age (ANY row for kommun)
+// ⭐ Extract Latest Age
 // ===============================
-function extractAge(ageRows) {
-  if (!ageRows || ageRows.length === 0) return 0;
+function extractAge(rows) {
+  if (!rows || !rows.length) return 0;
 
-  // Pick the row with the latest available year
-  let latest = ageRows[0];
+  let r = rows[0];
 
-  let value =
-    latest.medelalderAr2022 ??
-    latest.medelalderAr2021 ??
-    latest.medelalderAr2020 ??
-    latest.medelalderAr2019 ??
-    latest.medelalderAr2018 ??
-    0;
-
-  return fixNumber(value);
+  return fixNumber(
+    r.medelalderAr2022 ??
+    r.medelalderAr2021 ??
+    r.medelalderAr2020 ??
+    r.medelalderAr2019 ??
+    r.medelalderAr2018 ??
+    0
+  );
 }
 
-
 // ===============================
-// ⭐ Extract Latest Income (ANY row for kommun)
+// ⭐ Extract Latest Income
 // ===============================
-function extractIncome(incomeRows) {
-  if (!incomeRows || incomeRows.length === 0) return 0;
+function extractIncome(rows) {
+  if (!rows || !rows.length) return 0;
 
-  // Pick ANY row for the kommun (you said ignore gender)
-  let row = incomeRows[0];
+  let r = rows[0];
 
-  let value =
-    row.medelInkomst2022 ??
-    row.medelInkomst2021 ??
-    row.medelInkomst2020 ??
-    row.medelInkomst2019 ??
-    row.medelInkomst2018 ??
-    0;
-
-  return fixNumber(value);
+  return fixNumber(
+    r.medelInkomst2022 ??
+    r.medelInkomst2021 ??
+    r.medelInkomst2020 ??
+    r.medelInkomst2019 ??
+    r.medelInkomst2018 ??
+    0
+  );
 }
 
-
+// ===============================
+// ⭐ % Vote Change
+// ===============================
+function calcVoteChangePercent(v18, v22) {
+  if (v18 === 0) return 0;
+  return ((v22 - v18) / v18) * 100;
+}
 
 // ===============================
-// ⭐ Build Raw Combined Rows
+// ⭐ Build Dataset
 // ===============================
 function buildRawData() {
-  let resultsArray = cleanElectionData(electionResults);
+  const results = cleanElectionData(electionResults);
 
-  return resultsArray.map(r => {
-    let incomeRows = income.filter(i => normalizeKommun(i.kommun) === r.kommun);
-    let ageRows = ages.filter(a => normalizeKommun(a.kommun) === r.kommun);
+  return results.map(r => {
+    const incomeRows = incomeMap[r.kommun] || [];
+    const ageRows = ageMap[r.kommun] || [];
 
     return {
       kommun: r.kommun,
       parti: r.parti,
 
-      roster2018: r.roster2018,
-      roster2022: r.roster2022,
-
-      voteChange: fixNumber(r.roster2022) - fixNumber(r.roster2018),
+      voteChangePercent: calcVoteChangePercent(
+        r.roster2018,
+        r.roster2022
+      ),
 
       income: extractIncome(incomeRows),
       age: extractAge(ageRows)
@@ -141,25 +153,23 @@ function buildRawData() {
   });
 }
 
-
 // ===============================
-// ⭐ Final Combined Dataset
+// ⭐ Final Kommun Dataset
 // ===============================
 export function getCombinedData() {
-  let rawData = buildRawData();
+  const raw = buildRawData();
+  if (!raw.length) return [];
 
-  if (!rawData.length) return [];
-
-  let grouped = groupByKommun(rawData);
+  const grouped = groupByKommun(raw);
 
   return Object.keys(grouped).map(kommun => {
-    let rows = grouped[kommun];
+    const rows = grouped[kommun];
 
     return {
       kommun,
-      avgVoteChange: fixNumber(average(rows.map(r => r.voteChange))),
-      income: fixNumber(rows[0].income),
-      age: fixNumber(rows[0].age)
+      avgVoteChange: average(rows.map(r => r.voteChangePercent)),
+      income: rows[0].income,
+      age: rows[0].age
     };
   });
 }
