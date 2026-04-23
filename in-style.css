@@ -82,41 +82,37 @@ label.dropdown+label.dropdown {
 }
 
 /* ============================
-   INCOME ANALYSIS
+   PAGE HERO
    ============================ */
 
-#income-analysis-root {
-  margin-top: 1rem;
-}
-
-.income-hero {
+.page-hero {
   background: #1a2b4a;
   border-radius: 12px;
   padding: 1.75rem 2rem;
   margin-bottom: 1.5rem;
 }
 
-.income-hero h2 {
+.page-hero h2 {
   color: #fff;
   font-size: 1.3rem;
   font-weight: 600;
   margin: 0 0 0.5rem;
 }
 
-.income-hero p {
+.page-hero p {
   color: #a8bcd4;
   font-size: 0.95rem;
   margin: 0 0 1rem;
   line-height: 1.6;
 }
 
-.income-hero-tags {
+.hero-tags {
   display: flex;
   gap: 0.6rem;
   flex-wrap: wrap;
 }
 
-.income-hero-tag {
+.hero-tag {
   background: rgba(255, 255, 255, 0.1);
   color: #c8d8ea;
   font-size: 0.8rem;
@@ -125,7 +121,11 @@ label.dropdown+label.dropdown {
   border: 0.5px solid rgba(255, 255, 255, 0.2);
 }
 
-.income-grid {
+/* ============================
+   STAT GRID & CARDS
+   ============================ */
+
+.stat-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.9rem;
@@ -133,12 +133,12 @@ label.dropdown+label.dropdown {
 }
 
 @media (max-width: 700px) {
-  .income-grid {
+  .stat-grid {
     grid-template-columns: 1fr;
   }
 }
 
-.income-card {
+.stat-card {
   background: #fff;
   border: 1px solid #e3e3e3;
   border-top: 3px solid #1a2b4a;
@@ -146,39 +146,30 @@ label.dropdown+label.dropdown {
   padding: 1rem 1.25rem;
 }
 
-.income-card h4 {
+.stat-card h4 {
   margin: 0 0 0.4rem;
   font-size: 0.85rem;
   color: #666;
   font-weight: 500;
 }
 
-.income-card .value {
+.stat-card .value {
   font-size: 1.5rem;
   font-weight: 700;
   color: #c8963e;
 }
 
-.income-card .value-unit {
+.stat-card .value-unit {
   font-size: 0.9rem;
   font-weight: 400;
   color: #888;
 }
 
-.income-section-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1a2b4a;
-  margin: 1.5rem 0 0.5rem;
-  padding-left: 10px;
-  border-left: 3px solid #1a2b4a;
-}
+/* ============================
+   INFO NOTE
+   ============================ */
 
-.income-section {
-  margin-top: 1.5rem;
-}
-
-.income-info-note {
+.info-note {
   background: #e8f0fb;
   border: 1px solid #b5d4f4;
   border-radius: 8px;
@@ -188,7 +179,11 @@ label.dropdown+label.dropdown {
   margin-top: 0.75rem;
 }
 
-.income-analysis-box {
+/* ============================
+   ANALYSIS BOX
+   ============================ */
+
+.analysis-box {
   background: #f7f9fc;
   border: 1px solid #e0e8f4;
   border-radius: 10px;
@@ -196,21 +191,21 @@ label.dropdown+label.dropdown {
   margin-top: 1rem;
 }
 
-.income-analysis-box h3 {
+.analysis-box h3 {
   color: #1a2b4a;
   font-size: 1rem;
   font-weight: 600;
   margin: 0 0 0.5rem;
 }
 
-.income-analysis-box p,
-.income-analysis-box li {
+.analysis-box p,
+.analysis-box li {
   font-size: 0.92rem;
   color: #444;
   line-height: 1.7;
 }
 
-.income-corr-value {
+.corr-value {
   display: inline-block;
   background: #1a2b4a;
   color: #fff;
@@ -219,6 +214,10 @@ label.dropdown+label.dropdown {
   border-radius: 20px;
   margin-left: 6px;
 }
+
+/* ============================
+   LAN CHART
+   ============================ */
 
 .lan-chart-wrap {
   background: #fff;
