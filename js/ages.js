@@ -227,25 +227,25 @@ addMdToPage(`
 
 tableFromData({
   data: [
-    { 
-      group: "Unga", 
-      avg: youngAvg.toFixed(2), 
+    {
+      group: "Unga",
+      avg: youngAvg.toFixed(2),
       std: youngStd.toFixed(2),
       count: young.length,
       min: Math.min(...young.map(d => d.voteChangePercent)).toFixed(2),
       max: Math.max(...young.map(d => d.voteChangePercent)).toFixed(2)
     },
-    { 
-      group: "Medel", 
-      avg: middleAvg.toFixed(2), 
+    {
+      group: "Medel",
+      avg: middleAvg.toFixed(2),
       std: middleStd.toFixed(2),
       count: middle.length,
       min: Math.min(...middle.map(d => d.voteChangePercent)).toFixed(2),
       max: Math.max(...middle.map(d => d.voteChangePercent)).toFixed(2)
     },
-    { 
-      group: "Äldre", 
-      avg: oldAvg.toFixed(2), 
+    {
+      group: "Äldre",
+      avg: oldAvg.toFixed(2),
       std: oldStd.toFixed(2),
       count: old.length,
       min: Math.min(...old.map(d => d.voteChangePercent)).toFixed(2),
@@ -269,27 +269,24 @@ addMdToPage(`
 - t-värde: ${tValue.toFixed(3)}
 
 **Statistisk slutsats:**
-${
-  Math.abs(tValue) >= 2
+${Math.abs(tValue) >= 2
     ? "Det finns en statistiskt signifikant skillnad mellan åldersgrupper."
     : "Det finns ingen statistiskt signifikant skillnad mellan åldersgrupper."
-}
+  }
 
 **Tolkning:**
-${
-  Math.abs(corr) < 0.1
+${Math.abs(corr) < 0.1
     ? "Det finns inget tydligt samband mellan ålder och röstförändring."
     : Math.abs(corr) < 0.3
-    ? "Det finns ett svagt samband mellan ålder och röstförändring."
-    : "Det finns ett måttligt samband mellan ålder och röstförändring."
-}
+      ? "Det finns ett svagt samband mellan ålder och röstförändring."
+      : "Det finns ett måttligt samband mellan ålder och röstförändring."
+  }
 
 **Slutsvar:**
-${
-  Math.abs(tValue) >= 2 && Math.abs(corr) >= 0.1
+${Math.abs(tValue) >= 2 && Math.abs(corr) >= 0.1
     ? "Ålder har en statistiskt säkerställd men svag effekt på röstningsförändringar."
     : "Ålder är inte en stark förklaringsfaktor för förändringar i valresultat."
-}
+  }
 
 **Vad innebär detta?**
 Även om en skillnad kan påvisas statistiskt, är effekten liten.  
