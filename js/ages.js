@@ -100,6 +100,34 @@ let youngStd = std(young.map(d => d.voteChangePercent));
 let middleStd = std(middle.map(d => d.voteChangePercent));
 let oldStd = std(old.map(d => d.voteChangePercent));
 
+// =====================
+// CARDS (NEW GENERAL SYSTEM)
+// =====================
+addMdToPage(`
+<div class="card-grid">
+  <div class="card">
+    <div class="card-title">Unga</div>
+    <div class="card-value">${youngAvg.toFixed(2)}%</div>
+    <div>± ${youngStd.toFixed(2)}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Medel</div>
+    <div class="card-value">${middleAvg.toFixed(2)}%</div>
+    <div>± ${middleStd.toFixed(2)}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Äldre</div>
+    <div class="card-value">${oldAvg.toFixed(2)}%</div>
+    <div>± ${oldStd.toFixed(2)}</div>
+  </div>
+</div>
+`);
+
+// =====================
+// DIAGRAM
+// =====================
 drawGoogleChart({
   type: "ColumnChart",
   data: [
@@ -111,20 +139,13 @@ drawGoogleChart({
   options: {
     title: "Genomsnittlig procentuell röstförändring per åldersgrupp",
     legend: "none",
-    width: 600,
-    height: 400
+    width: 1300,
+    height: 500
   }
 });
 
-addMdToPage(`
-**Resultat:**
-- Unga: ${youngAvg.toFixed(2)}% (± ${youngStd.toFixed(2)})
-- Medel: ${middleAvg.toFixed(2)}% (± ${middleStd.toFixed(2)})
-- Äldre: ${oldAvg.toFixed(2)}% (± ${oldStd.toFixed(2)})
-`);
-
 // =====================
-// JADWAL 1: SAMMANFATTNING AV ÅLDERSGRUPPER
+// TABELL 1
 // =====================
 addMdToPage(`
 ---
@@ -162,8 +183,8 @@ drawGoogleChart({
     title: "Ålder vs röstförändring (%)",
     pointSize: 5,
     trendlines: { 0: { color: "red", lineWidth: 2 } },
-    width: 700,
-    height: 400
+    width: 1300,
+    height: 500
   }
 });
 
@@ -177,7 +198,7 @@ Tolkning:
 `);
 
 // =====================
-// JADWAL 2: PROV PÅ RÅDATA (FÖRSTA 20 RADER)
+// TABELL 2
 // =====================
 addMdToPage(`
 ---
@@ -218,7 +239,7 @@ Tolkning:
 `);
 
 // =====================
-// JADWAL 3: JÄMFÖRELSE AV ALLA TRE GRUPPER (MIN, MAX, MEDEL, STD)
+// TABELL 3
 // =====================
 addMdToPage(`
 ---
@@ -292,4 +313,3 @@ ${Math.abs(tValue) >= 2 && Math.abs(corr) >= 0.1
 Även om en skillnad kan påvisas statistiskt, är effekten liten.  
 Det tyder på att andra faktorer, såsom inkomst, geografi och lokala förhållanden, har större betydelse.
 `);
-

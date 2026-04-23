@@ -11,9 +11,6 @@ function normalizeKommun(name) {
     .replace(" kommun", "")
     .replace("s kommun", "")
     .replace(" stad", "")
-    .replace(/s$/, "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
     .trim();
 }
 

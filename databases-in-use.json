@@ -1,0 +1,37 @@
+[
+  {
+    "name": "counties-sqlite",
+    "type": "sqlite",
+    "file": "counties.sqlite3"
+  },
+  {
+    "name": "geo-mysql",
+    "type": "mysql",
+    "credentials": {
+      "host": "5.189.183.23",
+      "port": 4567,
+      "user": "dm24user",
+      "password": "8`)MjwHShtDf",
+      "database": "dm24"
+    }
+  },
+  {
+    "name": "kommun-info-mongodb",
+    "type": "mongodb",
+    "credentials": {
+      "connectionString": "mongodb://readuser:V9Yue8P6N7qCf@ac-efoqgwq-shard-00-00.jux6vnk.mongodb.net:27017,ac-efoqgwq-shard-00-01.jux6vnk.mongodb.net:27017,ac-efoqgwq-shard-00-02.jux6vnk.mongodb.net:27017/?ssl=true&authSource=admin&retryWrites=true&w=majority&appName=PersonsAndAddresses",
+      "database": "kommun-info"
+    }
+  },
+  {
+    "name": "riksdagsval-neo4j",
+    "type": "neo4j",
+    "credentials": {
+      "host": "5.189.183.23",
+      "port": 7687,
+      "user": "neo4j",
+      "password": "xlMeKNeW8v9k",
+      "database": "neo4j"
+    }
+  }
+]
