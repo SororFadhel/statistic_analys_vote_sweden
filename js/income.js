@@ -115,16 +115,28 @@ function extractElectionRows(source) {
 function buildElectionMap(results) {
   const rows = extractElectionRows(results);
   const map = new Map();
+
   for (const row of rows) {
-    const kommun = row.kommun || row.Kommun || row.name || row.kommunnamn || row.municipality;
+    const kommun = row.kommun || row.Kommun;
     if (!kommun) continue;
-    const roster2018 = getElectionValue(row, ["roster2018", "votes2018", "vote2018", "result2018", "andel2018", "share2018"]);
-    const roster2022 = getElectionValue(row, ["roster2022", "votes2022", "vote2022", "result2022", "andel2022", "share2022"]);
-    map.set(normalizeText(kommun), {
-      kommun, roster2018, roster2022,
-      voteChange: roster2018 !== null && roster2022 !== null ? roster2022 - roster2018 : null
-    });
+
+    const r2018 = toNumber(row.roster2018) ?? 0;
+    const r2022 = toNumber(row.roster2022) ?? 0;
+    const key = normalizeText(kommun);
+
+    if (!map.has(key)) {
+      map.set(key, { kommun, roster2018: 0, roster2022: 0 });
+    }
+
+    const item = map.get(key);
+    item.roster2018 += r2018;
+    item.roster2022 += r2022;
   }
+
+  for (const item of map.values()) {
+    item.voteChange = item.roster2022 - item.roster2018;
+  }
+
   return map;
 }
 
@@ -200,8 +212,6 @@ function mergeData() {
       inkomst_2022: item.inkomst_2022,
       arbetsloshet_2018: item.arbetsloshet_2018,
       arbetsloshet_2022: item.arbetsloshet_2022,
-      inkomst_forandring: item.inkomst_2018 !== null && item.inkomst_2022 !== null ? item.inkomst_2022 - item.inkomst_2018 : null,
-      arbetsloshet_forandring: item.arbetsloshet_2018 !== null && item.arbetsloshet_2022 !== null ? item.arbetsloshet_2022 - item.arbetsloshet_2018 : null,
       roster2018: election.roster2018,
       roster2022: election.roster2022,
       voteChange: election.voteChange
@@ -210,10 +220,44 @@ function mergeData() {
   return merged;
 }
 
-function splitLowHigh(data, key) {
-  const valid = data.filter(d => toNumber(d[key]) !== null).sort((a, b) => toNumber(a[key]) - toNumber(b[key]));
-  const mid = Math.floor(valid.length / 2);
-  return { low: valid.slice(0, mid), high: valid.slice(mid) };
+function buildIncomeIntervalData(data) {
+  const intervals = [
+    { label: "300–330 tkr", min: 300, max: 330 },
+    { label: "330–360 tkr", min: 330, max: 360 },
+    { label: "360–390 tkr", min: 360, max: 390 },
+    { label: "390–420 tkr", min: 390, max: 420 },
+    { label: "420–470 tkr", min: 420, max: 470 },
+    { label: "470+ tkr", min: 470, max: Infinity }
+  ];
+
+  return intervals.map(interval => {
+    const group = data.filter(d => {
+      const inc = toNumber(d.inkomst_2022);
+      return inc !== null && inc >= interval.min && inc < interval.max;
+    });
+    return {
+      label: interval.label,
+      avgVoteChange: average(group.map(d => d.voteChange)) ?? 0,
+      count: group.length
+    };
+  }).filter(d => d.count > 0);
+}
+
+function buildIncomeGroupData(data) {
+  const sorted = [...data]
+    .filter(d => toNumber(d.inkomst_2022) !== null)
+    .sort((a, b) => toNumber(a.inkomst_2022) - toNumber(b.inkomst_2022));
+
+  const third = Math.floor(sorted.length / 3);
+  const low = sorted.slice(0, third);
+  const mid = sorted.slice(third, third * 2);
+  const high = sorted.slice(third * 2);
+
+  return [
+    { label: "Låg inkomst", avgVoteChange: average(low.map(d => d.voteChange)) ?? 0 },
+    { label: "Medel inkomst", avgVoteChange: average(mid.map(d => d.voteChange)) ?? 0 },
+    { label: "Hög inkomst", avgVoteChange: average(high.map(d => d.voteChange)) ?? 0 }
+  ];
 }
 
 function buildLanData(data) {
@@ -221,11 +265,7 @@ function buildLanData(data) {
   for (const row of data) {
     if (!row.lan) continue;
     if (!lanMap.has(row.lan)) {
-      lanMap.set(row.lan, {
-        lan: row.lan,
-        voteChanges: [],
-        arbetsloshet_2022: row.arbetsloshet_2022
-      });
+      lanMap.set(row.lan, { lan: row.lan, voteChanges: [], arbetsloshet_2022: row.arbetsloshet_2022 });
     }
     const item = lanMap.get(row.lan);
     if (row.voteChange !== null) item.voteChanges.push(row.voteChange);
@@ -244,132 +284,12 @@ function buildLanData(data) {
     .sort((a, b) => b.arbetsloshet_2022 - a.arbetsloshet_2022);
 }
 
-function getRootContainer() {
-  let root = document.getElementById("income-analysis-root");
-  if (!root) {
-    root = document.createElement("div");
-    root.id = "income-analysis-root";
-    const target = document.querySelector("main") || document.querySelector("#content") || document.body;
-    target.appendChild(root);
-  }
-  return root;
-}
-
-function ensureStyles() {
-  if (document.getElementById("income-analysis-styles")) return;
-  const style = document.createElement("style");
-  style.id = "income-analysis-styles";
-  style.textContent = `
-    #income-analysis-root { margin-top: 1rem; }
-
-    .income-hero {
-      background: #1a2b4a;
-      border-radius: 12px;
-      padding: 1.75rem 2rem;
-      margin-bottom: 1.5rem;
-    }
-    .income-hero h2 { color: #fff; font-size: 1.3rem; font-weight: 600; margin: 0 0 0.5rem; }
-    .income-hero p { color: #a8bcd4; font-size: 0.95rem; margin: 0 0 1rem; line-height: 1.6; }
-    .income-hero-tags { display: flex; gap: 0.6rem; flex-wrap: wrap; }
-    .income-hero-tag { background: rgba(255,255,255,0.1); color: #c8d8ea; font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; border: 0.5px solid rgba(255,255,255,0.2); }
-
-    .income-filter-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
-    .income-filter-row label { font-size: 0.9rem; color: #555; font-weight: 600; }
-    .income-filter-row select { padding: 0.45rem 0.8rem; border: 1px solid #ccc; border-radius: 8px; background: #fff; font-size: 0.9rem; }
-
-    .income-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.9rem;
-      margin-bottom: 1.5rem;
-    }
-    @media (max-width: 700px) { .income-grid { grid-template-columns: 1fr; } }
-
-    .income-card { background: #fff; border: 1px solid #e3e3e3; border-top: 3px solid #1a2b4a; border-radius: 12px; padding: 1rem 1.25rem; }
-    .income-card h4 { margin: 0 0 0.4rem; font-size: 0.85rem; color: #666; font-weight: 500; }
-    .income-card .value { font-size: 1.5rem; font-weight: 700; color: #c8963e; }
-    .income-card .value-unit { font-size: 0.9rem; font-weight: 400; color: #888; }
-
-    .income-section-title { font-size: 1rem; font-weight: 600; color: #1a2b4a; margin: 1.5rem 0 0.75rem; padding-left: 10px; border-left: 3px solid #1a2b4a; }
-    .income-section { margin-top: 1.5rem; }
-    .income-chart { width: 100%; min-height: 430px; margin-top: 0.75rem; }
-
-    .income-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #e0e0e0; }
-    .income-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    .income-table thead tr { background: #1a2b4a; }
-    .income-table th { color: #fff; padding: 10px 12px; text-align: left; font-weight: 500; }
-    .income-table td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; color: #333; }
-    .income-table tbody tr:nth-child(even) td { background: #f7f9fc; }
-    .income-table tbody tr:last-child td { border-bottom: none; }
-    .income-table tbody tr:hover td { background: #eef2f8; }
-
-    .income-info-note { background: #e8f0fb; border: 1px solid #b5d4f4; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; color: #185fa5; margin-top: 0.75rem; }
-
-    .income-analysis-box { background: #f7f9fc; border: 1px solid #e0e8f4; border-radius: 10px; padding: 1.25rem 1.5rem; margin-top: 1rem; }
-    .income-analysis-box h3 { color: #1a2b4a; font-size: 1rem; font-weight: 600; margin: 0 0 0.5rem; }
-    .income-analysis-box p, .income-analysis-box li { font-size: 0.92rem; color: #444; line-height: 1.7; }
-    .income-corr-value { display: inline-block; background: #1a2b4a; color: #fff; font-size: 0.85rem; padding: 2px 10px; border-radius: 20px; margin-left: 6px; }
-
-    .lan-chart-wrap { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 1.5rem; margin-top: 0.75rem; }
-    .lan-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    .lan-bar-label { font-size: 12px; color: #444; width: 180px; flex-shrink: 0; text-align: right; }
-    .lan-bar-track { flex: 1; height: 22px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
-    .lan-bar-pos { height: 100%; border-radius: 4px; background: #1a2b4a; }
-    .lan-bar-neg { height: 100%; border-radius: 4px; background: #c8963e; }
-    .lan-bar-value { font-size: 11px; color: #555; width: 55px; flex-shrink: 0; }
-    .lan-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; }
-    .lan-badge-high { background: #faeeda; color: #854f0b; }
-    .lan-badge-mid { background: #e8f0fb; color: #185fa5; }
-    .lan-badge-low { background: #eaf3de; color: #3b6d11; }
-    .lan-legend { display: flex; gap: 1.5rem; margin-bottom: 1rem; font-size: 12px; color: #555; flex-wrap: wrap; }
-    .lan-legend-dot { width: 12px; height: 12px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: middle; }
-  `;
-  document.head.appendChild(style);
-}
-
-function renderTable(data) {
-  const preview = data.slice(0, 10);
-  return `
-    <div class="income-table-wrap">
-      <table class="income-table">
-        <thead>
-          <tr>
-            <th>Kommun</th>
-            <th>Län</th>
-            <th>Inkomst 2018 (tkr)</th>
-            <th>Inkomst 2022 (tkr)</th>
-            <th>Arbetslöshet 2018 (länsnivå)</th>
-            <th>Arbetslöshet 2022 (länsnivå)</th>
-            <th>Förändring i röster (2018→2022)</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${preview.map(row => `
-            <tr>
-              <td>${escapeHtml(row.kommun)}</td>
-              <td>${escapeHtml(row.lan ?? "")}</td>
-              <td>${formatNumber(row.inkomst_2018, 1)} tkr</td>
-              <td>${formatNumber(row.inkomst_2022, 1)} tkr</td>
-              <td>${row.arbetsloshet_2018 === null ? "saknas" : formatPercent(row.arbetsloshet_2018, 1)}</td>
-              <td>${row.arbetsloshet_2022 === null ? "saknas" : formatPercent(row.arbetsloshet_2022, 1)}</td>
-              <td>${formatNumber(row.voteChange, 2)}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    </div>
-    <div class="income-info-note">
-      ℹ️ Arbetslöshetsdata är tillgänglig på <strong>länsnivå</strong> och har kopplats till kommuner via en mapping-tabell. Alla kommuner inom samma län delar därför samma arbetslöshetsvärde. Förändring i röster avser skillnaden i antal röster för riksdagsvalet mellan 2018 och 2022.
-    </div>
-  `;
-}
 
 function renderLanChart(data) {
   const lanData = buildLanData(data);
-  if (!lanData.length) return "<p>Inte tillräckligt med data för att visa diagrammet.</p>";
+  if (!lanData.length) return "<p>Inte tillräckligt med data.</p>";
 
   const maxAbs = Math.max(...lanData.map(d => Math.abs(d.avgVoteChange)));
-
   const thresholdHigh = lanData.map(d => d.arbetsloshet_2022).sort((a, b) => b - a)[Math.floor(lanData.length / 3)];
   const thresholdLow = lanData.map(d => d.arbetsloshet_2022).sort((a, b) => b - a)[Math.floor(2 * lanData.length / 3)];
 
@@ -414,74 +334,192 @@ function renderLanChart(data) {
   `;
 }
 
-function drawScatterChart(containerId, data, xKey, yKey, title, xTitle, yTitle) {
-  if (!window.google?.visualization) return;
-  const chartData = [[xTitle, yTitle]];
-  data.forEach(row => {
-    const x = toNumber(row[xKey]);
-    const y = toNumber(row[yKey]);
-    if (x !== null && y !== null) chartData.push([x, y]);
-  });
-  if (chartData.length <= 1) {
-    document.getElementById(containerId).innerHTML = "<p>Det finns inte tillräckligt med data för att rita detta diagram.</p>";
-    return;
-  }
-  const dataTable = google.visualization.arrayToDataTable(chartData);
-  const chart = new google.visualization.ScatterChart(document.getElementById(containerId));
-  chart.draw(dataTable, {
-    title, hAxis: { title: xTitle }, vAxis: { title: yTitle },
-    legend: "none",
-    trendlines: { 0: { color: "#c8963e", lineWidth: 2 } },
-    colors: ["#1a2b4a"],
-    chartArea: { left: 70, top: 50, width: "75%", height: "68%" }
-  });
-}
+// ==============================
+// HUVUDDEL
+// ==============================
 
-function drawColumnChart(containerId, lowAvg, highAvg, title, lowLabel, highLabel) {
-  if (!window.google?.visualization) return;
-  if (lowAvg === null || highAvg === null) {
-    document.getElementById(containerId).innerHTML = "<p>Det finns inte tillräckligt med data för att rita detta diagram.</p>";
-    return;
-  }
-  const dataTable = google.visualization.arrayToDataTable([
-    ["Grupp", "Genomsnittlig förändring i röster"],
-    [lowLabel, lowAvg],
-    [highLabel, highAvg]
-  ]);
-  const chart = new google.visualization.ColumnChart(document.getElementById(containerId));
-  chart.draw(dataTable, {
-    title, legend: "none",
-    colors: ["#1a2b4a"],
-    hAxis: { title: "Grupp" }, vAxis: { title: "Genomsnittlig förändring i röster" },
-    chartArea: { left: 70, top: 50, width: "75%", height: "68%" }
-  });
-}
+addMdToPage(`
+# Inkomst och arbetslöshet vs förändring i valresultat
+`);
 
-function createAnalysisText({ incomeCorr, unemploymentCorr, selectedGender }) {
-  const genderLabel = selectedGender === "kvinnor" ? "kvinnor" : selectedGender === "män" ? "män" : "totalt";
+if (!dbInfoOk) {
+  displayDbNotOkText();
+} else {
+
+  const allMerged = mergeData();
+
+  // Hero banner
+  addToPage(`
+    <div class="income-hero">
+      <h2>Inkomst och arbetslöshet vs förändring i valresultat</h2>
+      <p>Kan ekonomiska faktorer förklara hur valresultatet förändrades mellan 2018 och 2022?</p>
+      <div class="income-hero-tags">
+        <span class="income-hero-tag">${allMerged.filter(d => normalizeGender(d.kon) === 'totalt').length} kommuner</span>
+        <span class="income-hero-tag">Riksdagsvalet 2018–2022</span>
+        <span class="income-hero-tag">Inkomst + Arbetslöshet</span>
+      </div>
+    </div>
+  `);
+
+  // Dropdown med mallens funktion
+  let selectedGender = addDropdown('Filtrera på kön', ['Totalt', 'Kvinnor', 'Män'], 'Totalt');
+  selectedGender = selectedGender.toLowerCase();
+
+  // Filtrera data
+  let filtered = allMerged.filter(row => normalizeGender(row.kon) === selectedGender);
+  if (!filtered.length) {
+    filtered = allMerged.filter(row => normalizeGender(row.kon) === 'totalt');
+  }
+
+  // Statistikkort
+  const avgIncome2018 = average(filtered.map(d => d.inkomst_2018));
+  const avgIncome2022 = average(filtered.map(d => d.inkomst_2022));
+  const avgUnemployment2018 = average(filtered.map(d => d.arbetsloshet_2018));
+  const avgUnemployment2022 = average(filtered.map(d => d.arbetsloshet_2022));
+  const avgVoteChange = average(filtered.map(d => d.voteChange));
+  const incomeCorr = correlation(filtered, 'inkomst_2022', 'voteChange');
+  const unemploymentCorr = correlation(filtered, 'arbetsloshet_2022', 'voteChange');
+
+  addToPage(`
+    <div class="income-grid">
+      <div class="income-card">
+        <h4>Antal kommuner</h4>
+        <div class="value">${filtered.length}</div>
+      </div>
+      <div class="income-card">
+        <h4>Genomsnittlig inkomst 2018 (tkr)</h4>
+        <div class="value">${formatNumber(avgIncome2018, 1)} <span class="value-unit">tkr</span></div>
+      </div>
+      <div class="income-card">
+        <h4>Genomsnittlig inkomst 2022 (tkr)</h4>
+        <div class="value">${formatNumber(avgIncome2022, 1)} <span class="value-unit">tkr</span></div>
+      </div>
+      <div class="income-card">
+        <h4>Genomsnittlig förändring i röster</h4>
+        <div class="value">${formatNumber(avgVoteChange, 1)}</div>
+      </div>
+      <div class="income-card">
+        <h4>Arbetslöshet 2018 (länsnivå)</h4>
+        <div class="value">${formatPercent(avgUnemployment2018, 1)}</div>
+      </div>
+      <div class="income-card">
+        <h4>Arbetslöshet 2022 (länsnivå)</h4>
+        <div class="value">${formatPercent(avgUnemployment2022, 1)}</div>
+      </div>
+    </div>
+  `);
+
+  // Datapreview med mallens tableFromData
+  addMdToPage(`## Datapreview`);
+  addMdToPage(`Här visas de första 10 raderna från det sammanslagna datasetet.`);
+
+  tableFromData({
+    data: filtered.slice(0, 10).map(row => ({
+      'Kommun': row.kommun,
+      'Län': row.lan ?? '',
+      'Inkomst 2018 (tkr)': formatNumber(row.inkomst_2018, 1),
+      'Inkomst 2022 (tkr)': formatNumber(row.inkomst_2022, 1),
+      'Arbetslöshet 2018 (länsnivå)': row.arbetsloshet_2018 === null ? 'saknas' : formatPercent(row.arbetsloshet_2018, 1),
+      'Arbetslöshet 2022 (länsnivå)': row.arbetsloshet_2022 === null ? 'saknas' : formatPercent(row.arbetsloshet_2022, 1),
+      'Röster 2022': row.roster2022,
+      'Röster 2018': row.roster2018,
+      'Förändring i röster (2018-2022)': toNumber(row.voteChange) ?? 0
+    }))
+  });
+
+  addToPage(`
+    <div class="income-info-note">
+      ℹ️ Arbetslöshetsdata är tillgänglig på <strong>länsnivå</strong>. Alla kommuner inom samma län delar samma värde. Förändring i röster avser skillnaden i totalt antal röster per kommun mellan riksdagsvalet 2018 och 2022.
+    </div>
+  `);
+
+  // Diagram 1 — Linjediagram inkomstintervall
+  addMdToPage(`## Samband mellan inkomst och förändring i röster`);
+  addMdToPage(`Kommunerna grupperas i inkomstintervall för att tydligare visa trenden mellan inkomstnivå och röstförändring.`);
+
+  const intervalData = buildIncomeIntervalData(filtered);
+  drawGoogleChart({
+    type: 'LineChart',
+    data: [
+      ['Inkomstintervall', 'Genomsnittlig förändring i röster'],
+      ...intervalData.map(d => [d.label, Math.round(d.avgVoteChange)])
+    ],
+    options: {
+      title: 'Inkomstintervall vs genomsnittlig förändring i röster',
+      hAxis: { title: 'Inkomstintervall (tkr)' },
+      vAxis: { title: 'Genomsnittlig förändring i röster' },
+      colors: ['#1a2b4a'],
+      trendlines: { 0: { color: '#c8963e', lineWidth: 2 } },
+      pointSize: 6,
+      chartArea: { left: 80, top: 50, right: 30, bottom: 80 },
+      height: 400
+    }
+  });
+
+  // Diagram 2 — Linjediagram låg/medel/hög inkomst
+  addMdToPage(`## Jämförelse mellan låg, medel och hög inkomst`);
+  addMdToPage(`Kommunerna delas upp i tre grupper utifrån inkomstnivå 2022.`);
+
+  const groupData = buildIncomeGroupData(filtered);
+  drawGoogleChart({
+    type: 'LineChart',
+    data: [
+      ['Grupp', 'Genomsnittlig förändring i röster'],
+      ...groupData.map(d => [d.label, Math.round(d.avgVoteChange)])
+    ],
+    options: {
+      title: 'Inkomstgrupp vs genomsnittlig förändring i röster',
+      hAxis: { title: 'Inkomstgrupp' },
+      vAxis: { title: 'Genomsnittlig förändring i röster' },
+      colors: ['#1a2b4a'],
+      pointSize: 8,
+      curveType: 'function',
+      chartArea: { left: 80, top: 50, right: 30, bottom: 80 },
+      height: 400
+    }
+  });
+
+  // Diagram 3 — Länsstapeldiagram
+  addMdToPage(`## Förändring i röster per län — sorterat efter arbetslöshet`);
+  addMdToPage(`Varje stapel visar genomsnittlig förändring i röster per län. Länens arbetslöshetsnivå visas som badge till höger.`);
+  addToPage(renderLanChart(filtered));
+
+  // Korrelationsanalys
   const incomeStrength = correlationLabel(incomeCorr);
   const unemploymentStrength = correlationLabel(unemploymentCorr);
-  return `
+  const genderLabel = selectedGender === 'kvinnor' ? 'kvinnor' : selectedGender === 'män' ? 'män' : 'totalt';
+
+  addToPage(`
     <div class="income-analysis-box">
       <h3>Korrelationsanalys</h3>
       <p>
         <strong>Inkomst och förändring i röster:</strong>
-        <span class="income-corr-value">${incomeCorr === null ? "saknas" : formatNumber(incomeCorr, 3)}</span>
+        <span class="income-corr-value">${incomeCorr === null ? 'saknas' : formatNumber(incomeCorr, 3)}</span>
         — ${incomeStrength} samband
       </p>
       <p>
         <strong>Arbetslöshet (länsnivå) och förändring i röster:</strong>
-        <span class="income-corr-value">${unemploymentCorr === null ? "saknas" : formatNumber(unemploymentCorr, 3)}</span>
+        <span class="income-corr-value">${unemploymentCorr === null ? 'saknas' : formatNumber(unemploymentCorr, 3)}</span>
         — ${unemploymentStrength} samband
       </p>
-      <p>Korrelationskoefficienten visar hur starkt två variabler samvarierar. Ett värde nära 0 tyder på svagt samband medan värden närmare 1 eller -1 tyder på starkare samband. Korrelation visar dock inte orsakssamband.</p>
+      <p>Korrelationskoefficienten visar hur starkt två variabler samvarierar. Ett värde nära 0 tyder på svagt samband medan värden närmare 1 eller −1 tyder på starkare samband. Korrelation visar dock inte orsakssamband.</p>
     </div>
 
     <div class="income-analysis-box" style="margin-top: 1rem;">
       <h3>Analys</h3>
-      <p>För gruppen <strong>${genderLabel}</strong> visar resultaten ett <strong>${incomeStrength}</strong> samband mellan inkomst och förändring i röster. Det betyder att ekonomiska skillnader kan ha betydelse, men att variationen mellan kommunerna också tyder på att fler faktorer påverkar utvecklingen.</p>
-      <p>Sambandet mellan arbetslöshet och förändring i röster framstår som <strong>${unemploymentStrength}</strong>. Eftersom arbetslöshetsdata finns på länsnivå fångas inte variation inom län fullt ut. Länsstapeldiagrammet ovan ger en mer nyanserad bild av hur länen med hög respektive låg arbetslöshet förändrats.</p>
+      <p>För gruppen <strong>${genderLabel}</strong> visar resultaten ett <strong>${incomeStrength}</strong> samband mellan inkomst och förändring i röster. Linjediagrammet visar att kommuner med högre inkomst tenderar att ha en annan röstförändring än kommuner med lägre inkomst.</p>
+      <p>Sambandet mellan arbetslöshet och förändring i röster framstår som <strong>${unemploymentStrength}</strong>. Länsstapeldiagrammet visar hur länen med hög respektive låg arbetslöshet förändrats, vilket ger en mer nyanserad bild än en enkel korrelation.</p>
       <p>Ekonomi verkar spela en roll, men väljarbeteende påverkas sannolikt också av ålder, migration, geografi och lokala förutsättningar.</p>
+    </div>
+
+    <div class="income-analysis-box" style="margin-top: 1rem;">
+      <h3>Kausalitet vs korrelation</h3>
+      <p>Även om vi ser ett samband mellan inkomst/arbetslöshet och röstförändring kan vi inte fastställa orsakssamband. Det är möjligt att:</p>
+      <ul>
+        <li>Ekonomiska faktorer påverkar politiska preferenser direkt</li>
+        <li>Andra faktorer (ålder, geografi, migration) påverkar både ekonomi och röstning</li>
+        <li>Sambandet är slumpmässigt eller beror på dataens begränsningar</li>
+      </ul>
     </div>
 
     <div class="income-analysis-box" style="margin-top: 1rem;">
@@ -497,142 +535,5 @@ function createAnalysisText({ incomeCorr, unemploymentCorr, selectedGender }) {
       <h3>Slutsats</h3>
       <p>Ekonomiska faktorer som inkomst och arbetslöshet verkar ha en viss koppling till förändringar i röster mellan 2018 och 2022. Sambanden är dock inte tillräckligt starka för att ensamma förklara utvecklingen. Ekonomi spelar en roll, men flera faktorer tillsammans påverkar hur valmönster förändras.</p>
     </div>
-  `;
-}
-
-// ==============================
-// HUVUDDEL
-// ==============================
-
-addMdToPage(`
-# Inkomst och arbetslöshet vs förändring i valresultat
-`);
-
-if (!dbInfoOk) {
-  displayDbNotOkText();
-} else {
-  ensureStyles();
-
-  const allMerged = mergeData();
-  const root = getRootContainer();
-
-  root.innerHTML = `
-    <div class="income-hero">
-      <h2>Inkomst och arbetslöshet vs förändring i valresultat</h2>
-      <p>Kan ekonomiska faktorer förklara hur valresultatet förändrades mellan 2018 och 2022?</p>
-      <div class="income-hero-tags">
-        <span class="income-hero-tag">287 kommuner</span>
-        <span class="income-hero-tag">Riksdagsvalet 2018–2022</span>
-        <span class="income-hero-tag">Inkomst + Arbetslöshet</span>
-      </div>
-    </div>
-
-    <div class="income-filter-row">
-      <label for="genderFilter">Filtrera på kön:</label>
-      <select id="genderFilter">
-        <option value="totalt">Totalt</option>
-        <option value="kvinnor">Kvinnor</option>
-        <option value="män">Män</option>
-      </select>
-    </div>
-
-    <div id="income-dynamic-content"></div>
-  `;
-
-  const genderFilter = document.getElementById("genderFilter");
-  const dynamicContent = document.getElementById("income-dynamic-content");
-
-  function render(selectedGender = "totalt") {
-    let filtered = allMerged.filter(row => normalizeGender(row.kon) === selectedGender);
-    if (!filtered.length && selectedGender !== "totalt") {
-      filtered = allMerged.filter(row => normalizeGender(row.kon) === "totalt");
-    }
-
-    const avgIncome2018 = average(filtered.map(d => d.inkomst_2018));
-    const avgIncome2022 = average(filtered.map(d => d.inkomst_2022));
-    const avgUnemployment2018 = average(filtered.map(d => d.arbetsloshet_2018));
-    const avgUnemployment2022 = average(filtered.map(d => d.arbetsloshet_2022));
-    const avgVoteChange = average(filtered.map(d => d.voteChange));
-    const incomeCorr = correlation(filtered, "inkomst_2022", "voteChange");
-    const unemploymentCorr = correlation(filtered, "arbetsloshet_2022", "voteChange");
-    const incomeGroups = splitLowHigh(filtered, "inkomst_2022");
-    const lowIncomeAvgVote = average(incomeGroups.low.map(d => d.voteChange));
-    const highIncomeAvgVote = average(incomeGroups.high.map(d => d.voteChange));
-
-    dynamicContent.innerHTML = `
-      <div class="income-section">
-        <p>Analysen baseras på kommunnivå och kombinerar valdata med ekonomisk data för 2018 och 2022. Förvald vy är <strong>totalt</strong>, men analysen kan filtreras på kvinnor och män.</p>
-      </div>
-
-      <div class="income-grid">
-        <div class="income-card">
-          <h4>Antal kommuner</h4>
-          <div class="value">${filtered.length}</div>
-        </div>
-        <div class="income-card">
-          <h4>Genomsnittlig inkomst 2018 (tkr)</h4>
-          <div class="value">${formatNumber(avgIncome2018, 1)} <span class="value-unit">tkr</span></div>
-        </div>
-        <div class="income-card">
-          <h4>Genomsnittlig inkomst 2022 (tkr)</h4>
-          <div class="value">${formatNumber(avgIncome2022, 1)} <span class="value-unit">tkr</span></div>
-        </div>
-        <div class="income-card">
-          <h4>Genomsnittlig förändring i röster</h4>
-          <div class="value">${formatNumber(avgVoteChange, 2)}</div>
-        </div>
-        <div class="income-card">
-          <h4>Arbetslöshet 2018 (länsnivå)</h4>
-          <div class="value">${formatPercent(avgUnemployment2018, 1)}</div>
-        </div>
-        <div class="income-card">
-          <h4>Arbetslöshet 2022 (länsnivå)</h4>
-          <div class="value">${formatPercent(avgUnemployment2022, 1)}</div>
-        </div>
-      </div>
-
-      <p class="income-section-title">Datapreview</p>
-      <p style="font-size:0.9rem;color:#555;">Här visas de första 10 raderna från det sammanslagna datasetet.</p>
-      ${renderTable(filtered)}
-
-      <p class="income-section-title">Samband mellan inkomst och förändring i röster</p>
-      <p style="font-size:0.9rem;color:#555;">Diagrammet visar om kommuner med högre inkomstnivå 2022 tenderar att ha en annan förändring i röster.</p>
-      <div id="incomeScatterChart" class="income-chart"></div>
-
-      <p class="income-section-title">Jämförelse mellan låg och hög inkomst</p>
-      <p style="font-size:0.9rem;color:#555;">Kommunerna delas upp i två grupper utifrån inkomstnivå 2022.</p>
-      <div id="incomeGroupChart" class="income-chart"></div>
-
-      <p class="income-section-title">Förändring i röster per län - sorterat efter arbetslöshet</p>
-      <p style="font-size:0.9rem;color:#555;">Varje stapel visar genomsnittlig förändring i röster per län. Länens arbetslöshetsnivå visas som badge till höger.</p>
-      ${renderLanChart(filtered)}
-
-      ${createAnalysisText({ incomeCorr, unemploymentCorr, selectedGender })}
-    `;
-
-    drawScatterChart("incomeScatterChart", filtered, "inkomst_2022", "voteChange", "Inkomst 2022 vs förändring i röster", "Inkomst 2022 (tkr)", "Förändring i röster");
-    drawColumnChart("incomeGroupChart", lowIncomeAvgVote, highIncomeAvgVote, "Låg vs hög inkomst", "Låg inkomst", "Hög inkomst");
-  }
-
-  genderFilter.addEventListener("change", () => {
-    sessionStorage.setItem("selectedGender", genderFilter.value);
-    render(genderFilter.value);
-  });
-
-  function startRender() {
-    const savedGender = sessionStorage.getItem("selectedGender") || "totalt";
-    genderFilter.value = savedGender;
-    render(savedGender);
-  }
-
-  if (window.google?.charts) {
-    google.charts.load("current", { packages: ["corechart"] });
-    google.charts.setOnLoadCallback(startRender);
-  } else {
-    dynamicContent.innerHTML = `
-      <div class="income-info-note">
-        Google Charts verkar inte vara laddat. Kontrollera projektmallen.
-      </div>
-    `;
-  }
+  `);
 }
