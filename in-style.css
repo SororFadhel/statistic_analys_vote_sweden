@@ -49,3 +49,34 @@ table {
 label.dropdown+label.dropdown {
   margin-top: -20px !important;
 }
+
+/* ============================
+   GENERAL CARD LAYOUT (REUSABLE)
+   ============================ */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 1.2rem 0 1.5rem 0;
+}
+
+.card {
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  padding: 1.2rem;
+  background: #fafafa;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.card-title {
+  margin: 0 0 0.4rem 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.card-value {
+  font-size: 2.3rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
