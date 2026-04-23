@@ -1,6 +1,7 @@
 import dbInfoOk, { displayDbNotOkText } from "./helpers/dbInfoOk.js";
 import { valdataKommun, geoData } from "./helpers/dataLoader.js";
 import { average, correlation } from "./helpers/utils.js";
+
 // ===============================
 // Hjälpfunktioner
 // ===============================
@@ -483,12 +484,8 @@ function renderPage(data) {
       <div class="analysis-box" style="margin-top:1rem;">
         <h3>Slutsats</h3>
         <p>Analysen visar att geografiska faktorer – befolkningstäthet och regional tillhörighet – har ett samband med hur röstmönstren förändrades mellan riksdagsvalen 2018 och 2022. Kommuner med lägre befolkningstäthet (glesbygd) tenderade att öka mer i högerblock och SD jämfört med tätare kommuner.</p>
-        <p>Sambanden är dock inte tillräckligt starka för att geografi ensam ska kunna förklara hela förändringen. En trolig förklaring är att geografi samvarierar med andra bakomliggande faktorer:</p>
-        <ul>
-          <li><strong>Inkomst</strong> – glesbygdskommuner har ofta lägre medelinkomst, vilket enligt projektets ekonomianalys också hänger ihop med röstförändring.</li>
-          <li><strong>Ålder</strong> – glesbygdskommuner har ofta en äldre befolkning, vilket enligt projektets åldersanalys kan påverka röstmönstren.</li>
-        </ul>
-        <p>Det mest rimliga är därför att geografi, inkomst och ålder tillsammans bidrar till att förklara varför Sverige förändrades politiskt mellan 2018 och 2022 – ingen faktor räcker ensam.</p>
+        <p>Sambanden är dock inte tillräckligt starka för att geografi ensam ska kunna förklara hela förändringen – andra faktorer spelar också in och analyseras på övriga sidor i projektet.</p>
+        <p>Geografiska faktorer är en viktig pusselbit för att förstå varför Sverige förändrades politiskt mellan 2018 och 2022 – men de bör ses i kombination med andra faktorer som analyseras på övriga sidor i detta projekt.</p>
       </div>
     `);
   }
