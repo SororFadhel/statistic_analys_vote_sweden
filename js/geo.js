@@ -249,76 +249,109 @@ function renderPage(data) {
     `);
 
     // Tabell
-    addMdToPage(`## Dataöversikt (topp 10 kommuner)`);
+    addMdToPage(`## Topp 10 kommuner med störst röstförändring`);
     tableFromData({
-      data: selected.slice(0, 10).map(d => ({
-        "Kommun": d.kommun,
-        "Valkrets": d.valkrets,
-        "Täthet 2018": d.density2018,
-        "Täthet 2022": d.density2022,
-        "Förändring täthet": d.densityChange,
-        "Högerblock förändring (%)": d.voteChange,
-        "SD förändring (%)": d.sdChange,
-        "Region": d.region || "-"
-      }))
+      data: [...selected]
+        .sort((a, b) => b.voteChange - a.voteChange)
+        .slice(0, 10)
+        .map(d => ({
+          "Kommun": d.kommun,
+          "Täthet 2022": d.density2022,
+          "Högerblock förändring (%)": d.voteChange,
+          "SD förändring (%)": d.sdChange,
+          "Region": d.region || "-"
+        }))
     });
 
-    // Diagram 1
-    addMdToPage(`## Diagram 1: Befolkningstäthet 2022 och röstförändring`);
-    addToPage(`<div class="info-note">Varje punkt representerar en kommun. X-axeln visar hur tät kommunen är (inv/km²) och Y-axeln visar hur mycket högerblockets röstandel förändrades. Den röda trendlinjen visar om tätare kommuner röstade mer eller mindre åt höger.</div>`);
+    // Diagram 1 - Linjediagram med täthetsintervall
+    addMdToPage(`## Röstade tätare kommuner annorlunda?`);
+    addToPage(`<div class="info-note">Kommunerna grupperas i täthetsintervall (inv/km²). Varje punkt visar genomsnittlig röstförändring för kommunerna i det intervallet. En nedåtgående linje betyder att tätare kommuner tenderade att rösta mindre åt höger.</div>`);
+
+    const intervals1 = [
+      { label: "0–50", min: 0, max: 50 },
+      { label: "50–100", min: 50, max: 100 },
+      { label: "100–500", min: 100, max: 500 },
+      { label: "500–1000", min: 500, max: 1000 },
+      { label: "1000–3000", min: 1000, max: 3000 },
+      { label: "3000+", min: 3000, max: Infinity }
+    ];
+    const lineData1 = intervals1.map(iv => {
+      const group = selected.filter(d => d.density2022 >= iv.min && d.density2022 < iv.max);
+      return [iv.label, group.length > 0 ? average(group.map(d => d.voteChange)) : null];
+    }).filter(d => d[1] !== null);
+
     drawGoogleChart({
-      type: "ScatterChart",
-      data: [
-        ["Befolkningstäthet 2022 (inv/km²)", "Förändring högerblock (%)"],
-        ...selected.map(d => [d.density2022, d.voteChange])
-      ],
+      type: "LineChart",
+      data: [["Befolkningstäthet 2022 (inv/km²)", "Genomsnittlig röstförändring (%)"], ...lineData1],
       options: {
-        title: "Befolkningstäthet 2022 vs röstförändring",
+        title: "Befolkningstäthet 2022 och genomsnittlig röstförändring",
         hAxis: { title: "Befolkningstäthet 2022 (inv/km²)" },
-        vAxis: { title: "Förändring högerblock (procentenheter)" },
-        trendlines: { 0: { color: "red", lineWidth: 2, opacity: 0.8 } },
+        vAxis: { title: "Genomsnittlig röstförändring (%)" },
+        colors: ["#1a2b4a"],
+        pointSize: 6,
+        curveType: "function",
         legend: "none", height: 420
       }
     });
 
-    // Diagram 2
-    addMdToPage(`## Diagram 2: Befolkningstäthet 2018 och röstförändring`);
-    addToPage(`<div class="info-note">Här används kommunernas befolkningstäthet år 2018 – alltså innan valet – för att se om utgångsläget hängde ihop med hur röstmönstren senare förändrades.</div>`);
+    // Diagram 2 - Linjediagram med täthetsintervall 2018
+    addMdToPage(`## Spelade utgångsläget 2018 roll?`);
+    addToPage(`<div class="info-note">Samma analys fast med täthetsdata från 2018 – alltså innan valet. Visar om kommunernas utgångsläge hängde ihop med hur röstmönstren senare förändrades.</div>`);
+
+    const intervals2 = [
+      { label: "0–50", min: 0, max: 50 },
+      { label: "50–100", min: 50, max: 100 },
+      { label: "100–500", min: 100, max: 500 },
+      { label: "500–1000", min: 500, max: 1000 },
+      { label: "1000–3000", min: 1000, max: 3000 },
+      { label: "3000+", min: 3000, max: Infinity }
+    ];
+    const lineData2 = intervals2.map(iv => {
+      const group = selected.filter(d => d.density2018 >= iv.min && d.density2018 < iv.max);
+      return [iv.label, group.length > 0 ? average(group.map(d => d.voteChange)) : null];
+    }).filter(d => d[1] !== null);
+
     drawGoogleChart({
-      type: "ScatterChart",
-      data: [
-        ["Befolkningstäthet 2018 (inv/km²)", "Förändring högerblock (%)"],
-        ...selected.map(d => [d.density2018, d.voteChange])
-      ],
+      type: "LineChart",
+      data: [["Befolkningstäthet 2018 (inv/km²)", "Genomsnittlig röstförändring (%)"], ...lineData2],
       options: {
-        title: "Befolkningstäthet 2018 vs röstförändring",
+        title: "Befolkningstäthet 2018 och genomsnittlig röstförändring",
         hAxis: { title: "Befolkningstäthet 2018 (inv/km²)" },
-        vAxis: { title: "Förändring högerblock (procentenheter)" },
-        trendlines: { 0: { color: "red", lineWidth: 2, opacity: 0.8 } },
+        vAxis: { title: "Genomsnittlig röstförändring (%)" },
+        colors: ["#1a2b4a"],
+        pointSize: 6,
+        curveType: "function",
         legend: "none", height: 420
       }
     });
 
-    // Diagram 3
-    addMdToPage(`## Diagram 3: Förändring i befolkningstäthet och röstförändring`);
-    addToPage(`<div class="info-note">Visar om kommuner som vuxit i befolkningstäthet mellan 2018 och 2022 också förändrade sitt röstmönster på ett annat sätt än kommuner som blivit glesare.</div>`);
+    // Diagram 3 - Stapel med minskad/stabil/okad tathet
+    addMdToPage(`## Påverkade täthetsutvecklingen röstningen?`);
+    addToPage(`<div class="info-note">Kommunerna delas upp i tre grupper baserat på om deras befolkningstäthet minskade, var stabil eller ökade mellan 2018 och 2022. Visar om kommuner som vuxit i täthet röstade annorlunda än de som blivit glesare.</div>`);
+
+    const decreased = selected.filter(d => d.densityChange < -1);
+    const stable = selected.filter(d => d.densityChange >= -1 && d.densityChange <= 10);
+    const increased = selected.filter(d => d.densityChange > 10);
+
     drawGoogleChart({
-      type: "ScatterChart",
+      type: "ColumnChart",
       data: [
-        ["Förändring i befolkningstäthet", "Förändring högerblock (%)"],
-        ...selected.map(d => [d.densityChange, d.voteChange])
+        ["Täthetsutveckling", "Högerblock förändring (%)", "SD förändring (%)"],
+        [`Minskad täthet (${decreased.length})`, average(decreased.map(d => d.voteChange)), average(decreased.map(d => d.sdChange))],
+        [`Stabil täthet (${stable.length})`, average(stable.map(d => d.voteChange)), average(stable.map(d => d.sdChange))],
+        [`Ökad täthet (${increased.length})`, average(increased.map(d => d.voteChange)), average(increased.map(d => d.sdChange))]
       ],
       options: {
-        title: "Täthetsutveckling vs röstförändring",
-        hAxis: { title: "Förändring i befolkningstäthet" },
-        vAxis: { title: "Förändring högerblock (procentenheter)" },
-        trendlines: { 0: { color: "red", lineWidth: 2, opacity: 0.8 } },
-        legend: "none", height: 420
+        title: "Röstförändring efter täthetsutveckling",
+        hAxis: { title: "Täthetsutveckling" },
+        vAxis: { title: "Genomsnittlig förändring (%)" },
+        colors: ["#1a2b4a", "#c8963e"],
+        legend: { position: "top" }, height: 420
       }
     });
 
     // Diagram 4
-    addMdToPage(`## Diagram 4: Genomsnittlig röstförändring – låg vs hög täthet`);
+    addMdToPage(`## Glesbygd vs stad – vem förändrade sin röst mest?`);
     addToPage(`<div class="info-note">Kommunerna delas i två lika stora grupper baserat på befolkningstäthet 2022. En tydlig skillnad mellan staplarna tyder på att täthet spelar roll.</div>`);
     drawGoogleChart({
       type: "ColumnChart",
@@ -348,7 +381,7 @@ function renderPage(data) {
       const mStd = std(middle.map(d => d.voteChange));
       const sStd = std(south.map(d => d.voteChange));
 
-      addMdToPage(`## Diagram 5: Regionjämförelse – Norr, Mitten, Söder`);
+      addMdToPage(`## Norr vs Söder – vem förändrades mest?`);
       addToPage(`<div class="info-note">Sverige delas i tre lika stora delar baserat på kommunernas latitud. Skiljer sig regionerna åt tyder det på att var i landet man bor påverkar den politiska utvecklingen.</div>`);
 
       drawGoogleChart({
@@ -398,20 +431,33 @@ function renderPage(data) {
       `);
     }
 
-    // Diagram 6 – SD scatter
-    addMdToPage(`## Diagram 6: Sverigedemokraternas förändring och befolkningstäthet`);
-    addToPage(`<div class="info-note">SD var det parti som förändrades mest 2018–2022. En nedåtlutande trendlinje betyder att SD ökade mer i glesbygd, uppåtlutande att de ökade mer i städer.</div>`);
+    // Diagram 6 – SD linjediagram med intervall
+    addMdToPage(`## Var ökade SD mest – stad eller glesbygd?`);
+    addToPage(`<div class="info-note">SD var det parti som förändrades mest 2018–2022. Kommunerna grupperas i täthetsintervall för att visa var SD ökade mest.</div>`);
+
+    const intervalsSD = [
+      { label: "0–50", min: 0, max: 50 },
+      { label: "50–100", min: 50, max: 100 },
+      { label: "100–500", min: 100, max: 500 },
+      { label: "500–1000", min: 500, max: 1000 },
+      { label: "1000–3000", min: 1000, max: 3000 },
+      { label: "3000+", min: 3000, max: Infinity }
+    ];
+    const lineDataSD = intervalsSD.map(iv => {
+      const group = selected.filter(d => d.density2022 >= iv.min && d.density2022 < iv.max);
+      return [iv.label, group.length > 0 ? average(group.map(d => d.sdChange)) : null];
+    }).filter(d => d[1] !== null);
+
     drawGoogleChart({
-      type: "ScatterChart",
-      data: [
-        ["Befolkningstäthet 2022 (inv/km²)", "SD förändring (procentenheter)"],
-        ...selected.map(d => [d.density2022, d.sdChange])
-      ],
+      type: "LineChart",
+      data: [["Befolkningstäthet 2022 (inv/km²)", "Genomsnittlig SD-förändring (%)"], ...lineDataSD],
       options: {
-        title: "Täthet vs SD-förändring",
+        title: "Befolkningstäthet och SD:s röstandelsförändring",
         hAxis: { title: "Befolkningstäthet 2022 (inv/km²)" },
-        vAxis: { title: "SD förändring (procentenheter)" },
-        trendlines: { 0: { color: "red", lineWidth: 2, opacity: 0.8 } },
+        vAxis: { title: "Genomsnittlig SD-förändring (%)" },
+        colors: ["#c8963e"],
+        pointSize: 6,
+        curveType: "function",
         legend: "none", height: 420
       }
     });
@@ -422,7 +468,7 @@ function renderPage(data) {
       const middleSD = selected.filter(d => d.region === "Mitten");
       const southSD = selected.filter(d => d.region === "Söder");
 
-      addMdToPage(`## Diagram 7: SD:s förändring per region`);
+      addMdToPage(`## Var i Sverige ökade SD mest?`);
       addToPage(`<div class="info-note">Jämför SD:s geografiska mönster med högerblockets mönster i diagram 5 – liknar de varandra eller skiljer de sig åt?</div>`);
 
       drawGoogleChart({
@@ -511,3 +557,4 @@ if (!dbInfoOk) {
   const data = buildData();
   renderPage(data);
 }
+
