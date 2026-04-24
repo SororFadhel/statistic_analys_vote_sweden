@@ -1,11 +1,17 @@
 import dbInfoOk, { displayDbNotOkText } from "./helpers/dbInfoOk.js";
 import { valdataKommun, geoData } from "./helpers/dataLoader.js";
 import { average, correlation } from "./helpers/utils.js";
+import { COLORS, pageHero, statGrid, statCard, infoNote, analysisBox } from "./helpers/components.js";
+
+
 
 // ===============================
-// Hjälpfunktioner
+// Hjälpfunktioner – omvandlar och rensar data
 // ===============================
 
+
+
+// Omvandlar ett värde till ett tal, returnerar 0 om ogiltigt
 function toNum(v) {
   if (v === null || v === undefined) return 0;
   const cleaned = String(v).replace(/\s/g, "").replace(",", ".").replace(/[^0-9.-]/g, "");
@@ -13,10 +19,16 @@ function toNum(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
+
+
+// Omvandlar ett värde till en sträng, returnerar tom sträng om null
 function safeText(v) {
   return v == null ? "" : String(v);
 }
 
+
+
+// Normaliserar kommunnamn för matchning (tar bort accenter, "kommun", etc.)
 function normalizeName(str) {
   return safeText(str)
     .toLowerCase()
@@ -30,6 +42,9 @@ function normalizeName(str) {
     .trim();
 }
 
+
+
+// Tolkar ett r-värde (korrelation) och returnerar en textbeskrivning
 function interpretationText(r) {
   if (!Number.isFinite(r)) return "Kunde inte beräknas";
   if (Math.abs(r) > 0.5) return "Starkt samband";
@@ -37,26 +52,28 @@ function interpretationText(r) {
   return "Svagt samband";
 }
 
-function shortDirectionText(r) {
-  if (!Number.isFinite(r)) return "oklart samband";
-  if (r > 0.2) return "positivt samband";
-  if (r < -0.2) return "negativt samband";
-  return "svagt eller inget tydligt samband";
-}
 
+
+// Beräknar standardavvikelse för en array av tal
 function std(arr) {
   if (arr.length === 0) return 0;
   const mean = average(arr);
   return Math.sqrt(arr.reduce((sum, x) => sum + (x - mean) ** 2, 0) / arr.length);
 }
 
+
+
 // ===============================
-// Bygg data
+// Bygg data – hämtar och bearbetar all rådata
 // ===============================
+
+
 
 function buildData() {
   const rows = Array.isArray(valdataKommun) ? valdataKommun : [];
   const geoRows = Array.isArray(geoData) ? geoData : [];
+
+
 
   const geoMap = new Map();
   for (const g of geoRows) {
@@ -69,13 +86,19 @@ function buildData() {
     }
   }
 
+
+
   const merged = rows.map(r => {
     const kommun = safeText(r["Kommunnamn"] || "");
     const latitude = geoMap.get(normalizeName(kommun)) ?? null;
 
+
+
     const density2018 = toNum(r["Befolkningstäthet_2018"]);
     const density2022 = toNum(r["Befolkningstäthet_2022"]);
     const densityChange = density2022 - density2018;
+
+
 
     const total18 =
       toNum(r["Arbetarepartiet-Socialdemokraterna_2018"]) +
@@ -87,6 +110,8 @@ function buildData() {
       toNum(r["Sverigedemokraterna_2018"]) +
       toNum(r["Vänsterpartiet_2018"]);
 
+
+
     const total22 =
       toNum(r["Arbetarepartiet-Socialdemokraterna_2022"]) +
       toNum(r["Centerpartiet_2022"]) +
@@ -97,11 +122,15 @@ function buildData() {
       toNum(r["Sverigedemokraterna_2022"]) +
       toNum(r["Vänsterpartiet_2022"]);
 
+
+
     const right18 =
       toNum(r["Moderaterna_2018"]) +
       toNum(r["Kristdemokraterna_2018"]) +
       toNum(r["Liberalerna (tidigare Folkpartiet)_2018"]) +
       toNum(r["Sverigedemokraterna_2018"]);
+
+
 
     const right22 =
       toNum(r["Moderaterna_2022"]) +
@@ -109,14 +138,20 @@ function buildData() {
       toNum(r["Liberalerna (tidigare Folkpartiet)_2022"]) +
       toNum(r["Sverigedemokraterna_2022"]);
 
+
+
     const voteChange =
       total18 > 0 && total22 > 0
         ? ((right22 / total22) - (right18 / total18)) * 100
         : 0;
 
+
+
     const sd18 = total18 > 0 ? (toNum(r["Sverigedemokraterna_2018"]) / total18) * 100 : 0;
     const sd22 = total22 > 0 ? (toNum(r["Sverigedemokraterna_2022"]) / total22) * 100 : 0;
     const sdChange = Number((sd22 - sd18).toFixed(2));
+
+
 
     return {
       kommun,
@@ -130,13 +165,19 @@ function buildData() {
     };
   }).filter(d => d.kommun && d.density2022 > 0);
 
+
+
   const withLatitude = merged.filter(d => Number.isFinite(d.latitude));
+
+
 
   if (withLatitude.length >= 9) {
     const sortedGeo = [...withLatitude].sort((a, b) => b.latitude - a.latitude);
     const size = Math.floor(sortedGeo.length / 3);
     const northSet = new Set(sortedGeo.slice(0, size).map(d => d.kommun));
     const middleSet = new Set(sortedGeo.slice(size, size * 2).map(d => d.kommun));
+
+
 
     return merged.map(d => ({
       ...d,
@@ -148,15 +189,23 @@ function buildData() {
     }));
   }
 
+
+
   return merged.map(d => ({ ...d, region: null }));
 }
 
+
+
 // ===============================
-// Rendera sidan
+// Rendera sidan – visar all data och diagram
 // ===============================
+
+
 
 function renderPage(data) {
   const hasRegionData = data.some(d => d.region);
+
+
 
   const allSorted = [...data].sort((a, b) => a.density2022 - b.density2022);
   const allMid = Math.floor(allSorted.length / 2);
@@ -166,21 +215,16 @@ function renderPage(data) {
   const allMiddle = data.filter(d => d.region === "Mitten");
   const allSouth = data.filter(d => d.region === "Söder");
 
-  // Hero-sektion
-  addToPage(`
-    <div class="page-hero">
-      <h2>Geografi och förändring i valresultat</h2>
-      <p>Kan befolkningstäthet och geografisk region förklara hur valresultatet förändrades mellan riksdagsvalen 2018 och 2022?</p>
-      <div class="hero-tags">
-        <span class="hero-tag">${data.length} kommuner</span>
-        <span class="hero-tag">Riksdagsvalet 2018–2022</span>
-        <span class="hero-tag">Täthet + Region</span>
-        <span class="hero-tag">SD-analys</span>
-      </div>
-    </div>
-  `);
 
-  // Dropdown
+
+  addToPage(pageHero(
+    "Geografi och förändring i valresultat",
+    "Kan befolkningstäthet och geografisk region förklara hur valresultatet förändrades mellan riksdagsvalen 2018 och 2022?",
+    [`${data.length} kommuner`, "Riksdagsvalet 2018–2022", "Täthet + Region", "SD-analys"]
+  ));
+
+
+
   let chosenFilter = addDropdown("Filtrera data:", [
     `Alla kommuner (${data.length})`,
     `Låg befolkningstäthet (${allLow.length})`,
@@ -191,6 +235,8 @@ function renderPage(data) {
       `Söder (${allSouth.length})`
     ] : [])
   ]);
+
+
 
   function getFiltered() {
     const val = typeof chosenFilter === "string" ? chosenFilter : (chosenFilter.value || "");
@@ -204,10 +250,13 @@ function renderPage(data) {
     return data;
   }
 
+
+
   function draw() {
     const selected = getFiltered();
 
-    // Stat-kort
+
+
     const sortedSel = [...selected].sort((a, b) => a.density2022 - b.density2022);
     const midSel = Math.floor(sortedSel.length / 2);
     const low = sortedSel.slice(0, midSel);
@@ -217,38 +266,20 @@ function renderPage(data) {
     const avgDensity = average(selected.map(d => d.density2022)).toFixed(1);
     const avgVoteChange = average(selected.map(d => d.voteChange)).toFixed(2);
     const avgSdChange = average(selected.map(d => d.sdChange)).toFixed(2);
-    const corr2022 = correlation(selected.map(d => d.density2022), selected.map(d => d.voteChange));
 
-    addToPage(`
-      <div class="stat-grid">
-        <div class="stat-card">
-          <h4>Antal kommuner i urvalet</h4>
-          <div class="value">${selected.length}</div>
-        </div>
-        <div class="stat-card">
-          <h4>Genomsnittlig täthet 2022</h4>
-          <div class="value">${avgDensity} <span class="value-unit">inv/km²</span></div>
-        </div>
-        <div class="stat-card">
-          <h4>Genomsnittlig röstförändring</h4>
-          <div class="value">${avgVoteChange} <span class="value-unit">%</span></div>
-        </div>
-        <div class="stat-card">
-          <h4>Genomsnittlig SD-förändring</h4>
-          <div class="value">${avgSdChange} <span class="value-unit">%</span></div>
-        </div>
-        <div class="stat-card">
-          <h4>Låg täthet – snitt röstförändring</h4>
-          <div class="value">${lowAvg.toFixed(2)} <span class="value-unit">%</span></div>
-        </div>
-        <div class="stat-card">
-          <h4>Hög täthet – snitt röstförändring</h4>
-          <div class="value">${highAvg.toFixed(2)} <span class="value-unit">%</span></div>
-        </div>
-      </div>
-    `);
 
-    // Tabell
+
+    addToPage(statGrid([
+      statCard("Antal kommuner i urvalet", selected.length),
+      statCard("Genomsnittlig täthet 2022", `${avgDensity} <span class="value-unit">inv/km²</span>`),
+      statCard("Genomsnittlig röstförändring", `${avgVoteChange} <span class="value-unit">%</span>`),
+      statCard("Genomsnittlig SD-förändring", `${avgSdChange} <span class="value-unit">%</span>`),
+      statCard("Låg täthet – snitt röstförändring", `${lowAvg.toFixed(2)} <span class="value-unit">%</span>`),
+      statCard("Hög täthet – snitt röstförändring", `${highAvg.toFixed(2)} <span class="value-unit">%</span>`)
+    ]));
+
+
+
     addMdToPage(`## Topp 10 kommuner med störst röstförändring`);
     tableFromData({
       data: [...selected]
@@ -263,9 +294,12 @@ function renderPage(data) {
         }))
     });
 
-    // Diagram 1 - Linjediagram med täthetsintervall
+
+
     addMdToPage(`## Röstade tätare kommuner annorlunda?`);
-    addToPage(`<div class="info-note">Kommunerna grupperas i täthetsintervall (inv/km²). Varje punkt visar genomsnittlig röstförändring för kommunerna i det intervallet. En nedåtgående linje betyder att tätare kommuner tenderade att rösta mindre åt höger.</div>`);
+    addToPage(infoNote("Kommunerna grupperas i täthetsintervall. En nedåtgående linje betyder att tätare kommuner tenderade att rösta mindre åt höger."));
+
+
 
     const intervals1 = [
       { label: "0–50", min: 0, max: 50 },
@@ -280,6 +314,8 @@ function renderPage(data) {
       return [iv.label, group.length > 0 ? average(group.map(d => d.voteChange)) : null];
     }).filter(d => d[1] !== null);
 
+
+
     drawGoogleChart({
       type: "LineChart",
       data: [["Befolkningstäthet 2022 (inv/km²)", "Genomsnittlig röstförändring (%)"], ...lineData1],
@@ -287,16 +323,20 @@ function renderPage(data) {
         title: "Befolkningstäthet 2022 och genomsnittlig röstförändring",
         hAxis: { title: "Befolkningstäthet 2022 (inv/km²)" },
         vAxis: { title: "Genomsnittlig röstförändring (%)" },
-        colors: ["#1a2b4a"],
+        colors: [COLORS.primary],
         pointSize: 6,
         curveType: "function",
-        legend: "none", height: 420
+        legend: "none",
+        height: 420
       }
     });
 
-    // Diagram 2 - Linjediagram med täthetsintervall 2018
+
+
     addMdToPage(`## Spelade utgångsläget 2018 roll?`);
-    addToPage(`<div class="info-note">Samma analys fast med täthetsdata från 2018 – alltså innan valet. Visar om kommunernas utgångsläge hängde ihop med hur röstmönstren senare förändrades.</div>`);
+    addToPage(infoNote("Samma analys fast med täthetsdata från 2018 – alltså innan valet. Visar om kommunernas utgångsläge hängde ihop med hur röstmönstren senare förändrades."));
+
+
 
     const intervals2 = [
       { label: "0–50", min: 0, max: 50 },
@@ -311,6 +351,8 @@ function renderPage(data) {
       return [iv.label, group.length > 0 ? average(group.map(d => d.voteChange)) : null];
     }).filter(d => d[1] !== null);
 
+
+
     drawGoogleChart({
       type: "LineChart",
       data: [["Befolkningstäthet 2018 (inv/km²)", "Genomsnittlig röstförändring (%)"], ...lineData2],
@@ -318,20 +360,26 @@ function renderPage(data) {
         title: "Befolkningstäthet 2018 och genomsnittlig röstförändring",
         hAxis: { title: "Befolkningstäthet 2018 (inv/km²)" },
         vAxis: { title: "Genomsnittlig röstförändring (%)" },
-        colors: ["#1a2b4a"],
+        colors: [COLORS.primary],
         pointSize: 6,
         curveType: "function",
-        legend: "none", height: 420
+        legend: "none",
+        height: 420
       }
     });
 
-    // Diagram 3 - Stapel med minskad/stabil/okad tathet
+
+
     addMdToPage(`## Påverkade täthetsutvecklingen röstningen?`);
-    addToPage(`<div class="info-note">Kommunerna delas upp i tre grupper baserat på om deras befolkningstäthet minskade, var stabil eller ökade mellan 2018 och 2022. Visar om kommuner som vuxit i täthet röstade annorlunda än de som blivit glesare.</div>`);
+    addToPage(infoNote("Kommunerna delas upp i tre grupper: minskad, stabil eller ökad befolkningstäthet."));
+
+
 
     const decreased = selected.filter(d => d.densityChange < -1);
     const stable = selected.filter(d => d.densityChange >= -1 && d.densityChange <= 10);
     const increased = selected.filter(d => d.densityChange > 10);
+
+
 
     drawGoogleChart({
       type: "ColumnChart",
@@ -345,14 +393,19 @@ function renderPage(data) {
         title: "Röstförändring efter täthetsutveckling",
         hAxis: { title: "Täthetsutveckling" },
         vAxis: { title: "Genomsnittlig förändring (%)" },
-        colors: ["#1a2b4a", "#c8963e"],
-        legend: { position: "top" }, height: 420
+        colors: [COLORS.primary, COLORS.secondary],
+        legend: { position: "top" },
+        height: 420
       }
     });
 
-    // Diagram 4
+
+
     addMdToPage(`## Glesbygd vs stad – vem förändrade sin röst mest?`);
-    addToPage(`<div class="info-note">Kommunerna delas i två lika stora grupper baserat på befolkningstäthet 2022. En tydlig skillnad mellan staplarna tyder på att täthet spelar roll.</div>`);
+    addToPage(infoNote("Kommunerna delas i två lika stora grupper. En tydlig skillnad mellan staplarna tyder på att täthet spelar roll."));
+
+
+
     drawGoogleChart({
       type: "ColumnChart",
       data: [
@@ -364,15 +417,20 @@ function renderPage(data) {
         title: "Genomsnittlig röstförändring efter befolkningstäthet",
         hAxis: { title: "Grupp" },
         vAxis: { title: "Genomsnittlig förändring (%)" },
-        colors: ["#1a2b4a"], legend: "none", height: 420
+        colors: [COLORS.primary],
+        legend: "none",
+        height: 420
       }
     });
 
-    // Diagram 5 – region
+
+
     if (hasRegionData) {
       const north = selected.filter(d => d.region === "Norr");
       const middle = selected.filter(d => d.region === "Mitten");
       const south = selected.filter(d => d.region === "Söder");
+
+
 
       const nAvg = average(north.map(d => d.voteChange));
       const mAvg = average(middle.map(d => d.voteChange));
@@ -381,8 +439,12 @@ function renderPage(data) {
       const mStd = std(middle.map(d => d.voteChange));
       const sStd = std(south.map(d => d.voteChange));
 
+
+
       addMdToPage(`## Norr vs Söder – vem förändrades mest?`);
-      addToPage(`<div class="info-note">Sverige delas i tre lika stora delar baserat på kommunernas latitud. Skiljer sig regionerna åt tyder det på att var i landet man bor påverkar den politiska utvecklingen.</div>`);
+      addToPage(infoNote("Sverige delas i tre lika stora delar baserat på kommunernas latitud."));
+
+
 
       drawGoogleChart({
         type: "ColumnChart",
@@ -396,44 +458,34 @@ function renderPage(data) {
           title: "Genomsnittlig röstförändring per region",
           hAxis: { title: "Region" },
           vAxis: { title: "Genomsnittlig förändring (%)" },
-          colors: ["#1a2b4a"], legend: "none", height: 420
+          colors: [COLORS.primary],
+          legend: "none",
+          height: 420
         }
       });
 
-      addToPage(`
-        <div class="analysis-box">
-          <h3>Regionstatistik – medelvärde och spridning</h3>
-          <table style="width:100%;border-collapse:collapse;font-size:0.92rem;">
-            <thead><tr style="background:#e8f0fb;">
-              <th style="padding:8px;text-align:left;border-bottom:2px solid #b5d4f4;">Region</th>
-              <th style="padding:8px;text-align:left;border-bottom:2px solid #b5d4f4;">Antal kommuner</th>
-              <th style="padding:8px;text-align:left;border-bottom:2px solid #b5d4f4;">Medelvärde (%)</th>
-              <th style="padding:8px;text-align:left;border-bottom:2px solid #b5d4f4;">Standardavvikelse</th>
-            </tr></thead>
-            <tbody>
-              <tr><td style="padding:8px;border-bottom:1px solid #e0e8f4;">Norr</td>
-                  <td style="padding:8px;border-bottom:1px solid #e0e8f4;">${north.length}</td>
-                  <td style="padding:8px;border-bottom:1px solid #e0e8f4;">${nAvg.toFixed(2)}</td>
-                  <td style="padding:8px;border-bottom:1px solid #e0e8f4;">${nStd.toFixed(2)}</td></tr>
-              <tr style="background:#f7f9fc;">
-                  <td style="padding:8px;border-bottom:1px solid #e0e8f4;">Mitten</td>
-                  <td style="padding:8px;border-bottom:1px solid #e0e8f4;">${middle.length}</td>
-                  <td style="padding:8px;border-bottom:1px solid #e0e8f4;">${mAvg.toFixed(2)}</td>
-                  <td style="padding:8px;border-bottom:1px solid #e0e8f4;">${mStd.toFixed(2)}</td></tr>
-              <tr><td style="padding:8px;">Söder</td>
-                  <td style="padding:8px;">${south.length}</td>
-                  <td style="padding:8px;">${sAvg.toFixed(2)}</td>
-                  <td style="padding:8px;">${sStd.toFixed(2)}</td></tr>
-            </tbody>
-          </table>
-          <p>En hög standardavvikelse betyder att kommunerna inom regionen spretar mycket. En låg standardavvikelse betyder att kommunerna är mer lika varandra.</p>
-        </div>
-      `);
+
+
+      addMdToPage(`### Regionstatistik – medelvärde och spridning`);
+      tableFromData({
+        data: [
+          { "Region": "Norr", "Antal kommuner": north.length, "Medelvärde (%)": nAvg.toFixed(2), "Standardavvikelse": nStd.toFixed(2) },
+          { "Region": "Mitten", "Antal kommuner": middle.length, "Medelvärde (%)": mAvg.toFixed(2), "Standardavvikelse": mStd.toFixed(2) },
+          { "Region": "Söder", "Antal kommuner": south.length, "Medelvärde (%)": sAvg.toFixed(2), "Standardavvikelse": sStd.toFixed(2) }
+        ]
+      });
+
+
+
+      addMdToPage(`*En hög standardavvikelse betyder att kommunerna inom regionen spretar mycket. En låg standardavvikelse betyder att kommunerna är mer lika varandra.*`);
     }
 
-    // Diagram 6 – SD linjediagram med intervall
+
+
     addMdToPage(`## Var ökade SD mest – stad eller glesbygd?`);
-    addToPage(`<div class="info-note">SD var det parti som förändrades mest 2018–2022. Kommunerna grupperas i täthetsintervall för att visa var SD ökade mest.</div>`);
+    addToPage(infoNote("SD var det parti som förändrades mest 2018–2022. Kommunerna grupperas i täthetsintervall för att visa var SD ökade mest."));
+
+
 
     const intervalsSD = [
       { label: "0–50", min: 0, max: 50 },
@@ -448,6 +500,8 @@ function renderPage(data) {
       return [iv.label, group.length > 0 ? average(group.map(d => d.sdChange)) : null];
     }).filter(d => d[1] !== null);
 
+
+
     drawGoogleChart({
       type: "LineChart",
       data: [["Befolkningstäthet 2022 (inv/km²)", "Genomsnittlig SD-förändring (%)"], ...lineDataSD],
@@ -455,21 +509,27 @@ function renderPage(data) {
         title: "Befolkningstäthet och SD:s röstandelsförändring",
         hAxis: { title: "Befolkningstäthet 2022 (inv/km²)" },
         vAxis: { title: "Genomsnittlig SD-förändring (%)" },
-        colors: ["#c8963e"],
+        colors: [COLORS.secondary],
         pointSize: 6,
         curveType: "function",
-        legend: "none", height: 420
+        legend: "none",
+        height: 420
       }
     });
 
-    // Diagram 7 – SD region
+
+
     if (hasRegionData) {
       const northSD = selected.filter(d => d.region === "Norr");
       const middleSD = selected.filter(d => d.region === "Mitten");
       const southSD = selected.filter(d => d.region === "Söder");
 
+
+
       addMdToPage(`## Var i Sverige ökade SD mest?`);
-      addToPage(`<div class="info-note">Jämför SD:s geografiska mönster med högerblockets mönster i diagram 5 – liknar de varandra eller skiljer de sig åt?</div>`);
+      addToPage(infoNote("Jämför SD:s geografiska mönster med högerblockets mönster."));
+
+
 
       drawGoogleChart({
         type: "ColumnChart",
@@ -483,58 +543,66 @@ function renderPage(data) {
           title: "Genomsnittlig SD-förändring per region",
           hAxis: { title: "Region" },
           vAxis: { title: "SD förändring (%)" },
-          colors: ["#c8963e"], legend: "none", height: 420
+          colors: [COLORS.secondary],
+          legend: "none",
+          height: 420
         }
       });
     }
 
-    // Korrelationsanalys
+
+
+    // ---- KORRELATIONSANALYS ----
     const corr2018 = correlation(selected.map(d => d.density2018), selected.map(d => d.voteChange));
     const corr2022val = correlation(selected.map(d => d.density2022), selected.map(d => d.voteChange));
     const corrChange = correlation(selected.map(d => d.densityChange), selected.map(d => d.voteChange));
 
-    addToPage(`
-      <div class="analysis-box">
-        <h3>Korrelationsanalys</h3>
-        <p><strong>Befolkningstäthet 2018 och röstförändring:</strong>
-          <span class="corr-value">${Number.isFinite(corr2018) ? corr2018.toFixed(3) : "-"}</span>
-          — ${interpretationText(corr2018).toLowerCase()}
-        </p>
-        <p><strong>Befolkningstäthet 2022 och röstförändring:</strong>
-          <span class="corr-value">${Number.isFinite(corr2022val) ? corr2022val.toFixed(3) : "-"}</span>
-          — ${interpretationText(corr2022val).toLowerCase()}
-        </p>
-        <p><strong>Förändring i täthet och röstförändring:</strong>
-          <span class="corr-value">${Number.isFinite(corrChange) ? corrChange.toFixed(3) : "-"}</span>
-          — ${interpretationText(corrChange).toLowerCase()}
-        </p>
-        <p>Korrelationskoefficienten visar hur starkt två variabler samvarierar. Ett värde nära 0 tyder på svagt samband medan värden närmare 1 eller −1 tyder på starkare samband. Korrelation visar dock inte orsakssamband.</p>
-      </div>
 
-      <div class="analysis-box" style="margin-top:1rem;">
-        <h3>Tolkning av resultaten</h3>
-        <p>Sambandet mellan befolkningstäthet 2022 och röstförändring är <strong>${interpretationText(corr2022val).toLowerCase()}</strong> (r = ${Number.isFinite(corr2022val) ? corr2022val.toFixed(3) : "-"}). Tätare kommuner tenderade att ${corr2022val < 0 ? "minska mer" : "öka mer"} i högerblock jämfört med glesare kommuner.</p>
-        <p>Kommuner med låg täthet hade i genomsnitt <strong>${lowAvg.toFixed(2)} procentenheters</strong> förändring, medan kommuner med hög täthet hade <strong>${highAvg.toFixed(2)} procentenheters</strong> förändring. ${Math.abs(lowAvg - highAvg) > 1 ? "Det finns en tydlig skillnad mellan grupperna." : "Skillnaden mellan grupperna är liten."}</p>
-      </div>
 
-      <div class="analysis-box" style="margin-top:1rem;">
-        <h3>Korrelation är inte kausalitet</h3>
-        <p>Även om vi ser samband mellan geografi och valförändringar betyder det inte att befolkningstäthet i sig orsakade förändringen. Det är möjligt att:</p>
-        <ul>
-          <li>Geografiska faktorer påverkar politiska preferenser direkt</li>
-          <li>Andra faktorer (inkomst, ålder, migration) påverkar både geografi och röstning</li>
-          <li>Sambandet speglar strukturella skillnader mellan stad och landsbygd</li>
-        </ul>
-      </div>
+    addMdToPage(`## Korrelationsanalys`);
+    tableFromData({
+      data: [
+        { 'Variabel': 'Befolkningstäthet 2018', 'r-värde': Number.isFinite(corr2018) ? corr2018.toFixed(3) : '-', 'Tolkning': interpretationText(corr2018) },
+        { 'Variabel': 'Befolkningstäthet 2022', 'r-värde': Number.isFinite(corr2022val) ? corr2022val.toFixed(3) : '-', 'Tolkning': interpretationText(corr2022val) },
+        { 'Variabel': 'Förändring i täthet', 'r-värde': Number.isFinite(corrChange) ? corrChange.toFixed(3) : '-', 'Tolkning': interpretationText(corrChange) }
+      ]
+    });
 
-      <div class="analysis-box" style="margin-top:1rem;">
-        <h3>Slutsats</h3>
-        <p>Analysen visar att geografiska faktorer – befolkningstäthet och regional tillhörighet – har ett samband med hur röstmönstren förändrades mellan riksdagsvalen 2018 och 2022. Kommuner med lägre befolkningstäthet (glesbygd) tenderade att öka mer i högerblock och SD jämfört med tätare kommuner.</p>
-        <p>Sambanden är dock inte tillräckligt starka för att geografi ensam ska kunna förklara hela förändringen – andra faktorer spelar också in och analyseras på övriga sidor i projektet.</p>
-        <p>Geografiska faktorer är en viktig pusselbit för att förstå varför Sverige förändrades politiskt mellan 2018 och 2022 – men de bör ses i kombination med andra faktorer som analyseras på övriga sidor i detta projekt.</p>
-      </div>
-    `);
+
+
+    addMdToPage(`*r ≈ 0 = inget samband | r ≈ 1 = starkt positivt | r ≈ -1 = starkt negativt*`);
+
+
+
+    addMdToPage(`## Tolkning av resultaten`);
+    addMdToPage(`
+Sambandet mellan befolkningstäthet 2022 och röstförändring är **${interpretationText(corr2022val).toLowerCase()}** (r = ${Number.isFinite(corr2022val) ? corr2022val.toFixed(3) : "-"}). Tätare kommuner tenderade att ${corr2022val < 0 ? "minska mer" : "öka mer"} i högerblock jämfört med glesare kommuner.
+
+ 
+
+Kommuner med låg täthet hade i genomsnitt **${lowAvg.toFixed(2)} procentenheters** förändring, medan kommuner med hög täthet hade **${highAvg.toFixed(2)} procentenheters** förändring. ${Math.abs(lowAvg - highAvg) > 1 ? "Det finns en tydlig skillnad mellan grupperna." : "Skillnaden mellan grupperna är liten."}
+    `);
+
+
+
+    addToPage(analysisBox('Korrelation är inte kausalitet', `
+<p>Även om vi ser samband mellan geografi och valförändringar betyder det inte att befolkningstäthet i sig orsakade förändringen. Det är möjligt att:</p>
+<ul>
+<li>Geografiska faktorer påverkar politiska preferenser direkt</li>
+<li>Andra faktorer (inkomst, ålder, migration) påverkar både geografi och röstning</li>
+<li>Sambandet speglar strukturella skillnader mellan stad och landsbygd</li>
+</ul>
+    `));
+
+
+
+    addToPage(analysisBox('Slutsats', `
+<p>Analysen visar att geografiska faktorer – befolkningstäthet och regional tillhörighet – har ett samband med hur röstmönstren förändrades mellan riksdagsvalen 2018 och 2022. Kommuner med lägre befolkningstäthet (glesbygd) tenderade att öka mer i högerblock och SD jämfört med tätare kommuner.</p>
+<p>Sambanden är dock inte tillräckligt starka för att geografi ensam ska kunna förklara hela förändringen – andra faktorer spelar också in och analyseras på övriga sidor i projektet.</p>
+    `, true));
   }
+
+
 
   draw();
   if (chosenFilter && chosenFilter.addEventListener) {
@@ -547,9 +615,13 @@ function renderPage(data) {
   }
 }
 
+
+
 // ===============================
-// Start
+// Start – kontrollera databas och starta rendering
 // ===============================
+
+
 
 if (!dbInfoOk) {
   displayDbNotOkText();
@@ -557,4 +629,10 @@ if (!dbInfoOk) {
   const data = buildData();
   renderPage(data);
 }
+
+ 
+
+ 
+
+
 
