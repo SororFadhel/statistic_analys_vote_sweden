@@ -557,3 +557,4 @@ if (!dbInfoOk) {
   const data = buildData();
   renderPage(data);
 }
+
