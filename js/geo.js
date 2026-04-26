@@ -72,6 +72,15 @@ function getRegion(lat) {
   return "Norr";
 }
 
+// Fallback-latituder för kommuner som saknas i geoData
+const FALLBACK_LATITUDES = {
+  "jarfalla": 59.43,
+  "salem": 59.20,
+  "solna": 59.36,
+  "sundbyberg": 59.36,
+  "tyreso": 59.24
+};
+
 // Bygger och bearbetar all data
 function buildData() {
   const rows = Array.isArray(valdataKommun) ? valdataKommun : [];
@@ -82,7 +91,8 @@ function buildData() {
 
   return rows.map(r => {
     const kommun = safeText(r["Kommunnamn"] || "");
-    const latitude = geoMap[normalizeKommun(kommun)] ?? null;
+    const normalizedKommun = normalizeKommun(kommun);
+    const latitude = geoMap[normalizedKommun] ?? FALLBACK_LATITUDES[normalizedKommun] ?? null;
     const region = getRegion(latitude);
 
     const density2018 = toNum(r["Befolkningstäthet_2018"]);
@@ -431,5 +441,8 @@ if (!dbInfoOk) {
   displayDbNotOkText();
 } else {
   const data = buildData();
+  // Debug visade att 5 kommuner saknade region i geoData:
+  // Järfälla, Salem, Solna, Sundbyberg, Tyresö
+  // Dessa har lagts till manuellt i FALLBACK_LATITUDES ovan
   renderPage(data);
 }
