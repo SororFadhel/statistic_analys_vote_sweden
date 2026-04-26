@@ -12,8 +12,10 @@
 // ===============================
 
 export const COLORS = {
-  primary: '#1a2b4a',
-  secondary: '#c8963e'
+  primary: '#1a2b4a',      // Mörkblå — huvudfärg
+  secondary: '#c8963e',    // Guld/orange — accentfärg
+  tertiary: '#2d6a4f',     // Mörkgrön — tredje färg
+  quaternary: '#5f5e5a'    // Mörkgrå — fjärde färg
 };
 
 
