@@ -72,14 +72,7 @@ function getRegion(lat) {
   return "Norr";
 }
 
-// Fallback-latituder för kommuner som saknas i geoData
-const FALLBACK_LATITUDES = {
-  "jarfalla": 59.43,
-  "salem": 59.20,
-  "solna": 59.36,
-  "sundbyberg": 59.36,
-  "tyreso": 59.24
-};
+
 
 // Bygger och bearbetar all data
 function buildData() {
@@ -89,10 +82,17 @@ function buildData() {
   // Bygg latitudkarta
   const geoMap = indexGeoData(geoRows);
 
+  // Manuellt tillagda kommuner som saknas i geoData
+  geoMap["jarfalla"] = 59.42;  // Järfälla
+  geoMap["salem"] = 59.20;  // Salem
+  geoMap["solna"] = 59.36;  // Solna
+  geoMap["sundbyberg"] = 59.36;  // Sundbyberg
+  geoMap["tyreso"] = 59.25;  // Tyresö
+
   return rows.map(r => {
     const kommun = safeText(r["Kommunnamn"] || "");
     const normalizedKommun = normalizeKommun(kommun);
-    const latitude = geoMap[normalizedKommun] ?? FALLBACK_LATITUDES[normalizedKommun] ?? null;
+    const latitude = geoMap[normalizedKommun] ?? null;
     const region = getRegion(latitude);
 
     const density2018 = toNum(r["Befolkningstäthet_2018"]);
