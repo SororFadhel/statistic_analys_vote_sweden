@@ -1,10 +1,13 @@
 import { getCombinedData } from "./helpers/dataProcessor.js";
 import { correlation, average } from "./helpers/utils.js";
+import { COLORS, pageHero, statGrid, statCard, infoNote, analysisBox } from "./helpers/components.js";
 
-// ==============================
-// HJÄLPFUNKTIONER
-// ==============================
+// ===============================
+// 🔧 HJÄLPFUNKTIONER
+// Små verktyg som används överallt i filen
+// ===============================
 
+// Standardavvikelse för en array
 function std(arr) {
   let mean = average(arr);
   return Math.sqrt(
@@ -12,6 +15,7 @@ function std(arr) {
   );
 }
 
+// Oberoende t-test (Welch's t-test) mellan två grupper
 function tTest(arr1, arr2) {
   let m1 = average(arr1);
   let m2 = average(arr2);
@@ -24,6 +28,7 @@ function tTest(arr1, arr2) {
   return denominator === 0 ? 0 : numerator / denominator;
 }
 
+// Formaterar ett tal med svenska decimaler
 function formatNumber(value, decimals = 1) {
   if (value === null || value === undefined || Number.isNaN(value)) return "saknas";
   return value.toLocaleString("sv-SE", {
@@ -32,6 +37,7 @@ function formatNumber(value, decimals = 1) {
   });
 }
 
+// Översätter korrelationsvärde till text: starkt, måttligt eller svagt
 function correlationLabel(r) {
   if (r === null) return "kan inte beräknas";
   const abs = Math.abs(r);
@@ -40,24 +46,37 @@ function correlationLabel(r) {
   return "svagt";
 }
 
-// ==============================
-// HUVUDDEL
-// ==============================
+// ===============================
+// 🗂️ DATABEARBETNING
+// ===============================
 
-addMdToPage(`
-# Ålder och förändring i valresultat
-`);
+// Delar upp kommuner i tre åldersgrupper (Unga, Medel, Äldre)
+function buildAgeGroups(dataset) {
+  let sorted = [...dataset].sort((a, b) => a.age - b.age);
+  let size = Math.floor(sorted.length / 3);
+
+  let young = sorted.slice(0, size);
+  let middle = sorted.slice(size, size * 2);
+  let old = sorted.slice(size * 2);
+
+  return { young, middle, old, size };
+}
+
+// ===============================
+// 🚀 HUVUDDEL
+// Sidans innehåll — rubriker, filter, tabeller, diagram och analys
+// ===============================
+
+addMdToPage(`# Ålder och förändring i valresultat`);
 
 const allData = getCombinedData().filter(
   d => d.age > 0 && d.avgVoteChange !== 0
 );
 
 if (!allData.length) {
-  addMdToPage(`
-    <div class="info-note">
-      <strong>Ingen data tillgänglig.</strong> Kontrollera att datakällorna är korrekt anslutna.
-    </div>
-  `);
+  addToPage(infoNote(
+    '<strong>Ingen data tillgänglig.</strong> Kontrollera att datakällorna är korrekt anslutna.'
+  ));
 } else {
 
   const dataset = allData.map(d => ({
@@ -65,27 +84,19 @@ if (!allData.length) {
     voteChangePercent: d.avgVoteChange
   }));
 
-  addToPage(`
-    <div class="page-hero">
-      <h2>Ålder och förändring i valresultat</h2>
-      <p>Skiljer sig förändringar i valresultat mellan kommuner med yngre och äldre befolkning?</p>
-      <div class="hero-tags">
-        <span class="hero-tag">${dataset.length} kommuner</span>
-        <span class="hero-tag">Riksdagsvalet 2018-2022</span>
-        <span class="hero-tag">Ålder</span>
-      </div>
-    </div>
-  `);
+  // Hero-ruta överst på sidan
+  addToPage(pageHero(
+    'Ålder och förändring i valresultat',
+    'Skiljer sig förändringar i valresultat mellan kommuner med yngre och äldre befolkning?',
+    [
+      `${dataset.length} kommuner`,
+      'Riksdagsvalet 2018-2022',
+      'Ålder'
+    ]
+  ));
 
-  // =====================
-  // STEG 1: GRUPPERING
-  // =====================
-  let sorted = [...dataset].sort((a, b) => a.age - b.age);
-  let size = Math.floor(sorted.length / 3);
-
-  let young = sorted.slice(0, size);
-  let middle = sorted.slice(size, size * 2);
-  let old = sorted.slice(size * 2);
+  // Dela upp i åldersgrupper
+  const { young, middle, old } = buildAgeGroups(dataset);
 
   let youngAvg = average(young.map(d => d.voteChangePercent));
   let middleAvg = average(middle.map(d => d.voteChangePercent));
@@ -95,50 +106,49 @@ if (!allData.length) {
   let middleStd = std(middle.map(d => d.voteChangePercent));
   let oldStd = std(old.map(d => d.voteChangePercent));
 
-  addToPage(`
-    <div class="stat-grid">
-      <div class="stat-card">
-        <h4>Antal kommuner</h4>
-        <div class="value">${dataset.length}</div>
-      </div>
-      <div class="stat-card">
-        <h4>Genomsnittlig ålder (alla)</h4>
-        <div class="value">${formatNumber(average(dataset.map(d => d.age)), 1)} <span class="value-unit">år</span></div>
-      </div>
-      <div class="stat-card">
-        <h4>Genomsnittlig förändring (alla)</h4>
-        <div class="value">${formatNumber(average(dataset.map(d => d.voteChangePercent)), 2)} <span class="value-unit">%</span></div>
-      </div>
-      <div class="stat-card">
-        <h4>Standardavvikelse</h4>
-        <div class="value">${formatNumber(std(dataset.map(d => d.voteChangePercent)), 2)}</div>
-      </div>
-      <div class="stat-card">
-        <h4>Åldersgrupp Unga</h4>
-        <div class="value">${formatNumber(youngAvg, 2)} <span class="value-unit">%</span></div>
-      </div>
-      <div class="stat-card">
-        <h4>Åldersgrupp Äldre</h4>
-        <div class="value">${formatNumber(oldAvg, 2)} <span class="value-unit">%</span></div>
-      </div>
-    </div>
-  `);
+  // Beräkna korrelation (anpassad till utils signatur: xs, ys)
+  const ageXs = dataset.map(d => d.age);
+  const ageYs = dataset.map(d => d.voteChangePercent);
+  const corr = correlation(ageXs, ageYs);
+  const corrStrength = correlationLabel(corr);
 
+  // t-test mellan unga och äldre
+  const tValue = tTest(
+    young.map(d => d.voteChangePercent),
+    old.map(d => d.voteChangePercent)
+  );
+  const isSignificant = Math.abs(tValue) >= 2;
+
+  // Statistikkort med nyckeltal
+  addToPage(statGrid([
+    statCard('Antal kommuner', dataset.length),
+    statCard('Genomsnittlig ålder', `${formatNumber(average(dataset.map(d => d.age)), 1)} <span class="value-unit">år</span>`),
+    statCard('Genomsnittlig förändring', `${formatNumber(average(dataset.map(d => d.voteChangePercent)), 2)} <span class="value-unit">%</span>`),
+    statCard('Standardavvikelse', formatNumber(std(dataset.map(d => d.voteChangePercent)), 2)),
+    statCard('Åldersgrupp Unga', `${formatNumber(youngAvg, 2)} <span class="value-unit">%</span>`),
+    statCard('Åldersgrupp Äldre', `${formatNumber(oldAvg, 2)} <span class="value-unit">%</span>`)
+  ]));
+
+  // Inforuta om gruppering
+  addToPage(infoNote(
+    'Kommunerna delas in i tre lika stora grupper baserat på medelålder. <strong>Unga</strong> = lägsta tredjedelen, <strong>Medel</strong> = mellersta tredjedelen, <strong>Äldre</strong> = högsta tredjedelen.'
+  ));
+
+  // Diagram 1 — Åldersgrupper vs röstförändring
   addMdToPage(`## Åldersgrupper och röstförändring`);
-  addMdToPage(`Kommunerna delas in i tre lika stora grupper baserat på medelålder: Unga, Medel och Äldre.`);
 
   drawGoogleChart({
     type: "ColumnChart",
     data: [
       ["Åldersgrupp", "Genomsnittlig % förändring", { role: "style" }],
-      ["Unga", youngAvg, "#1a2b4a"],
-      ["Medel", middleAvg, "#c8963e"],
-      ["Äldre", oldAvg, "#3b6d11"]
+      ["Unga", youngAvg, COLORS.primary],
+      ["Medel", middleAvg, COLORS.secondary],
+      ["Äldre", oldAvg, COLORS.success]
     ],
     options: {
       title: "Genomsnittlig procentuell röstförändring per åldersgrupp",
       legend: "none",
-      colors: ["#1a2b4a"],
+      colors: [COLORS.primary],
       chartArea: { left: 80, top: 50, right: 30, bottom: 80 },
       height: 400
     }
@@ -154,21 +164,8 @@ if (!allData.length) {
     ]
   });
 
-  addToPage(`
-    <div class="info-note">
-      Varje grupp innehåller ungefär en tredjedel av alla kommuner. <strong>Unga</strong> = lägsta tredjedelen av medelålder, <strong>Äldre</strong> = högsta tredjedelen.
-    </div>
-  `);
-
-  // =====================
-  // STEG 2: KORRELATION
-  // =====================
+  // Diagram 2 — Scatter: Ålder vs röstförändring
   addMdToPage(`## Samband mellan ålder och röstförändring`);
-
-  let corr = correlation(
-    dataset.map(d => d.age),
-    dataset.map(d => d.voteChangePercent)
-  );
 
   drawGoogleChart({
     type: "ScatterChart",
@@ -179,8 +176,8 @@ if (!allData.length) {
     options: {
       title: "Ålder vs röstförändring (%)",
       pointSize: 5,
-      trendlines: { 0: { color: "#c8963e", lineWidth: 2 } },
-      colors: ["#1a2b4a"],
+      trendlines: { 0: { color: COLORS.secondary, lineWidth: 2 } },
+      colors: [COLORS.primary],
       hAxis: { title: "Medelålder" },
       vAxis: { title: "Röstförändring (%)" },
       chartArea: { left: 80, top: 50, right: 30, bottom: 80 },
@@ -188,48 +185,27 @@ if (!allData.length) {
     }
   });
 
-  const corrStrength = correlationLabel(corr);
+  // Analysrutor — korrelation, t-test, analys, kausalitet, begränsningar, slutsats
+  addToPage(analysisBox('Korrelationsanalys', `
+    <p>
+      <strong>Korrelationskoefficient (r):</strong>
+      <span class="corr-value">${corr === null ? 'saknas' : formatNumber(corr, 3)}</span>
+      — ${corrStrength} samband
+    </p>
+    <p>Korrelationskoefficienten visar hur starkt två variabler samvarierar. Ett värde nära 0 tyder på svagt samband medan värden närmare 1 eller −1 tyder på starkare samband. Korrelation visar dock inte orsakssamband.</p>
+  `));
 
-  addToPage(`
-    <div class="analysis-box">
-      <h3>Korrelationsanalys</h3>
-      <p>
-        <strong>Korrelationskoefficient (r):</strong>
-        <span class="corr-value">${corr === null ? 'saknas' : formatNumber(corr, 3)}</span>
-        — ${corrStrength} samband
-      </p>
-      <p>Korrelationskoefficienten visar hur starkt två variabler samvarierar. Ett värde nära 0 tyder på svagt samband medan värden närmare 1 eller −1 tyder på starkare samband. Korrelation visar dock inte orsakssamband.</p>
-    </div>
-  `);
+  addToPage(analysisBox('Statistiskt test (t-test)', `
+    <p><strong>Hypoteser:</strong> H₀: Ingen skillnad mellan unga och äldre kommuner. H₁: Det finns en skillnad.</p>
+    <p>
+      <strong>t-värde:</strong>
+      <span class="corr-value">${formatNumber(tValue, 3)}</span>
+      — ${isSignificant ? "statistiskt signifikant" : "inte statistiskt signifikant"}
+    </p>
+    <p>Tolkning: |t| ≥ 2 indikerar statistiskt signifikant skillnad mellan grupperna.</p>
+  `, true));
 
-  // =====================
-  // STEG 3: T-TEST
-  // =====================
-  addMdToPage(`## Statistiskt test (t-test)`);
-  addMdToPage(`**Hypoteser:** H₀: Ingen skillnad mellan unga och äldre kommuner. H₁: Det finns en skillnad.`);
-
-  let tValue = tTest(
-    young.map(d => d.voteChangePercent),
-    old.map(d => d.voteChangePercent)
-  );
-
-  const isSignificant = Math.abs(tValue) >= 2;
-
-  addToPage(`
-    <div class="analysis-box">
-      <h3>t-test: Unga vs Äldre</h3>
-      <p>
-        <strong>t-värde:</strong>
-        <span class="corr-value">${formatNumber(tValue, 3)}</span>
-        — ${isSignificant ? "statistiskt signifikant" : "inte statistiskt signifikant"}
-      </p>
-      <p>Tolkning: |t| ≥ 2 indikerar statistiskt signifikant skillnad mellan grupperna.</p>
-    </div>
-  `);
-
-  // =====================
-  // DATAPREVIEW
-  // =====================
+  // Datapreview
   addMdToPage(`## Datapreview`);
   addMdToPage(`Här visas de första 10 raderna från datasetet.`);
 
@@ -241,44 +217,34 @@ if (!allData.length) {
     }))
   });
 
-  // =====================
-  // SLUTSATSER
-  // =====================
-  addToPage(`
-    <div class="analysis-box" style="margin-top: 1rem;">
-      <h3>Analys</h3>
-      <p>Resultaten visar ett <strong>${corrStrength}</strong> samband mellan ålder och förändring i röster. Korrelationskoefficienten är <strong>${formatNumber(corr, 3)}</strong>.</p>
-      <p>t-testet mellan unga och äldre kommuner ger ett värde på <strong>${formatNumber(tValue, 3)}</strong>, vilket ${isSignificant ? "tyder på en statistiskt signifikant skillnad" : "inte räcker för att påvisa en signifikant skillnad"}.</p>
-      <p>Skillnaden mellan grupperna är <strong>${formatNumber(Math.abs(youngAvg - oldAvg), 2)}%</strong>.</p>
-    </div>
+  // Slutsatsrutor
+  addToPage(analysisBox('Analys', `
+    <p>Resultaten visar ett <strong>${corrStrength}</strong> samband mellan ålder och förändring i röster. Korrelationskoefficienten är <strong>${formatNumber(corr, 3)}</strong>.</p>
+    <p>t-testet mellan unga och äldre kommuner ger ett värde på <strong>${formatNumber(tValue, 3)}</strong>, vilket ${isSignificant ? "tyder på en statistiskt signifikant skillnad" : "inte räcker för att påvisa en signifikant skillnad"}.</p>
+    <p>Skillnaden mellan grupperna är <strong>${formatNumber(Math.abs(youngAvg - oldAvg), 2)}%</strong>.</p>
+  `, true));
 
-    <div class="analysis-box" style="margin-top: 1rem;">
-      <h3>Kausalitet vs korrelation</h3>
-      <p>Även om vi ser ett samband mellan ålder och röstförändring kan vi inte fastställa orsakssamband. Det är möjligt att:</p>
-      <ul>
-        <li>Ålder påverkar politiska preferenser direkt</li>
-        <li>Andra faktorer (inkomst, geografi, migration) påverkar både ålder och röstning</li>
-        <li>Sambandet är slumpmässigt eller beror på dataens begränsningar</li>
-      </ul>
-    </div>
+  addToPage(analysisBox('Kausalitet vs korrelation', `
+    <p>Även om vi ser ett samband mellan ålder och röstförändring kan vi inte fastställa orsakssamband. Det är möjligt att:</p>
+    <ul>
+      <li>Ålder påverkar politiska preferenser direkt</li>
+      <li>Andra faktorer (inkomst, geografi, migration) påverkar både ålder och röstning</li>
+      <li>Sambandet är slumpmässigt eller beror på dataens begränsningar</li>
+    </ul>
+  `, true));
 
-    <div class="analysis-box" style="margin-top: 1rem;">
-      <h3>Begränsningar</h3>
-      <ul>
-        <li>Analysen bygger på korrelation och kan inte fastställa orsakssamband.</li>
-        <li>Ålder representeras som medelålder per kommun — individuella skillnader inom kommunen fångas inte.</li>
-        <li>Andra variabler kan också påverka förändringar i röster.</li>
-      </ul>
-    </div>
+  addToPage(analysisBox('Begränsningar', `
+    <ul>
+      <li>Analysen bygger på korrelation och kan inte fastställa orsakssamband.</li>
+      <li>Ålder representeras som medelålder per kommun — individuella skillnader inom kommunen fångas inte.</li>
+      <li>Andra variabler kan också påverka förändringar i röster.</li>
+    </ul>
+  `, true));
 
-    <div class="analysis-box" style="margin-top: 1rem;">
-      <h3>Slutsats</h3>
-      <p>
-        ${isSignificant && Math.abs(corr) >= 0.1
+  addToPage(analysisBox('Slutsats', `
+    <p>${isSignificant && Math.abs(corr) >= 0.1
       ? "Ålder har en statistiskt säkerställd men svag effekt på röstningsförändringar. Effekten är liten och andra faktorer har troligen större betydelse."
       : "Ålder är inte en stark förklaringsfaktor för förändringar i valresultat. Andra faktorer som inkomst, geografi och lokala förhållanden verkar ha större betydelse."
-    }
-      </p>
-    </div>
-  `);
+    }</p>
+  `, true));
 }
