@@ -35,9 +35,11 @@ function interpretationText(r) {
 }
 
 function std(arr) {
-  if (arr.length === 0) return 0;
+  if (arr.length < 2) return null;
   const mean = average(arr);
-  return Math.sqrt(arr.reduce((sum, x) => sum + (x - mean) ** 2, 0) / arr.length);
+  return Math.sqrt(
+    arr.reduce((sum, x) => sum + (x - mean) ** 2, 0) / (arr.length - 1)
+  );
 }
 
 function indexGeoData(arr) {
@@ -531,16 +533,57 @@ Analysen jämför hur stor andel av befolkningen som röstade i kommuner med hö
     const corr2022val = correlation(selected.map(d => d.density2022), selected.map(d => d.turnoutChange));
     const corrChange = correlation(selected.map(d => d.densityChange), selected.map(d => d.turnoutChange));
 
-    addMdToPage(`## Korrelationsanalys`);
-    addToPage(infoNote("r-värdet mäter styrkan på sambandet mellan två variabler. Ett negativt r betyder att när en variabel ökar, minskar den andra. Här mäts sambandet mellan befolkningstäthet och förändring i valdeltagande 2018→2022."));
+    addMdToPage(`## Korrelationsanalys
 
-    tableFromData({
-      data: [
-        { "Variabel": "Befolkningstäthet 2018", "r-värde": Number.isFinite(corr2018) ? corr2018.toFixed(3) : "-", "Tolkning": interpretationText(corr2018) },
-        { "Variabel": "Befolkningstäthet 2022", "r-värde": Number.isFinite(corr2022val) ? corr2022val.toFixed(3) : "-", "Tolkning": interpretationText(corr2022val) },
-        { "Variabel": "Förändring i täthet 2018→2022", "r-värde": Number.isFinite(corrChange) ? corrChange.toFixed(3) : "-", "Tolkning": interpretationText(corrChange) }
-      ]
-    });
+För att undersöka sambandet mellan befolkningstäthet och förändring i valdeltagande används Pearsons korrelationskoefficient (r). Detta mått beskriver styrkan och riktningen på ett linjärt samband mellan två variabler.
+
+### Resultat
+
+`);
+
+tableFromData({
+  data: [
+    {
+      "Variabel": "Befolkningstäthet 2018",
+      "r-värde": Number.isFinite(corr2018) ? corr2018.toFixed(3) : "-",
+      "Tolkning": interpretationText(corr2018)
+    },
+    {
+      "Variabel": "Befolkningstäthet 2022",
+      "r-värde": Number.isFinite(corr2022val) ? corr2022val.toFixed(3) : "-",
+      "Tolkning": interpretationText(corr2022val)
+    },
+    {
+      "Variabel": "Förändring i befolkningstäthet 2018–2022",
+      "r-värde": Number.isFinite(corrChange) ? corrChange.toFixed(3) : "-",
+      "Tolkning": interpretationText(corrChange)
+    }
+  ]
+});
+
+addMdToPage(`### Statistisk tolkning
+
+- Ett r-värde nära 0 innebär inget tydligt linjärt samband.
+- Ett positivt r innebär att högre täthet tenderar att hänga ihop med ökad förändring i valdeltagande.
+- Ett negativt r innebär att högre täthet tenderar att hänga ihop med minskad förändring i valdeltagande.
+
+### Osäkerhet och signifikans
+
+Korrelationen visar samvariation men inte säker orsakssamband. För att bedöma statistisk säkerhet bör värdet även tolkas tillsammans med stickprovsstorlek (n = ${selected.length}). 
+
+Ett samband kan se starkt ut även om det delvis beror på slumpvariation, särskilt när många observationer eller flera tester används i samma analys (så kallat *multiple comparisons problem*).
+
+### Viktiga metodbegränsningar
+
+- **Ingen kausalitet:** Sambandet visar endast samvariation, inte orsak.
+- **Outliers påverkar resultatet:** Extrema kommuner kan påverka r-värdet och därmed tolkningen.
+- **Icke-linjära samband:** Vissa samband kan vara svagt linjära trots tydliga mönster i diagrammet.
+- **Aggregerad data:** Analysen sker på kommunnivå och säger inget direkt om individer (ekologiskt felslut).
+
+### Sammanfattning
+
+Sambandet mellan befolkningstäthet och förändring i valdeltagande är överlag svagt till måttligt och bör tolkas försiktigt. Resultaten tyder på att geografi kan ha viss koppling till valdeltagandets förändring mellan 2018 och 2022, men förklarar endast en mindre del av variationen och påverkas sannolikt av flera andra faktorer såsom demografi och socioekonomi.
+`);
 
     addMdToPage(`**Hur läser man tabellen?** r nära 0 = inget samband | r nära 1 = starkt positivt samband (båda ökar tillsammans) | r nära -1 = starkt negativt samband (när täthet ökar, minskar valdeltagandeförändringen).`);
 
