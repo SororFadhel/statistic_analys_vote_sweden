@@ -129,7 +129,7 @@ export function lanChart(lanData, formatPercent) {
       <div class="lan-bar-row">
         <span class="lan-bar-label">${d.lan}</span>
         <div class="lan-bar-track"><div class="${barClass}" style="width:${pct}%"></div></div>
-        <span class="lan-bar-value">${sign}${Math.abs(Math.round(d.avgVoteChange))}</span>
+        <<span class="lan-bar-value">${sign}${Math.abs(Math.round(d.avgVoteChange))} %</span>
         <span class="${getBadgeClass(d.arbetsloshet_2022)}">${getBadgeLabel(d.arbetsloshet_2022)} (${formatPercent(d.arbetsloshet_2022, 1)})</span>
       </div>
     `;

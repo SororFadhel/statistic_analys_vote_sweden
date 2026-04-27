@@ -308,3 +308,8 @@ label.dropdown+label.dropdown {
   margin-right: 4px;
   vertical-align: middle;
 }
+
+table td:last-child {
+  white-space: nowrap;
+  text-align: right;
+}

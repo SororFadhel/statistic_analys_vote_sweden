@@ -275,6 +275,7 @@ if (!dbInfoOk) {
 } else {
 
   const allMerged = mergeData();
+  window.allMerged = allMerged;
 
   // Hero-ruta överst på sidan
   addToPage(pageHero(
@@ -337,15 +338,20 @@ if (!dbInfoOk) {
     data: filtered.slice(0, 10).map(row => ({
       'Kommun': row.kommun,
       'Län': row.lan ?? '',
-      'Inkomst 2018 (tkr)': formatNumber(row.inkomst_2018, 1),
-      'Inkomst 2022 (tkr)': formatNumber(row.inkomst_2022, 1),
-      'Arbetslöshet 2018 (länsnivå)': row.arbetsloshet_2018 === null ? 'saknas' : formatPercent(row.arbetsloshet_2018, 1),
-      'Arbetslöshet 2022 (länsnivå)': row.arbetsloshet_2022 === null ? 'saknas' : formatPercent(row.arbetsloshet_2022, 1),
+      'Inkomst 2018': formatNumber(row.inkomst_2018, 1),
+      'Inkomst 2022': formatNumber(row.inkomst_2022, 1),
+      'Arbetslöshet 2018': row.arbetsloshet_2018 === null ? 'saknas' : formatPercent(row.arbetsloshet_2018, 1),
+      'Arbetslöshet 2022': row.arbetsloshet_2022 === null ? 'saknas' : formatPercent(row.arbetsloshet_2022, 1),
       'Röster 2018': row.roster2018,
       'Röster 2022': row.roster2022,
-      'Förändring i röster % (2018-2022)': row.voteChange === null ? 'saknas' : formatNumber(row.voteChange, 2) + ' %'
+      'Förändring i röster (%)': row.voteChange === null ? 'saknas' : formatNumber(row.voteChange, 2) + ' %'
     }))
   });
+
+  addToPage(infoNote(
+    'Inkomst anges i tkr (tusental kronor). Arbetslöshet är på länsnivå - alla kommuner inom samma län delar samma värde.'
+  ));
+  
 
   // Diagram 1 — inkomstintervall vs röstförändring med trendlinje
   addMdToPage(`## Samband mellan inkomst och förändring i röster`);
@@ -437,6 +443,10 @@ if (!dbInfoOk) {
   `, true));
 
   addToPage(analysisBox('Slutsats', `
-    <p>Ekonomiska faktorer som inkomst och arbetslöshet verkar ha en viss koppling till förändringar i röster mellan 2018 och 2022. Sambanden är dock inte tillräckligt starka för att ensamma förklara utvecklingen.</p>
+    <p>
+Ekonomiska faktorer som inkomst och arbetslöshet verkar ha en viss koppling till förändringar i röster mellan 2018 och 2022.
+Sambanden är dock inte tillräckligt starka för att ensamma förklara utvecklingen.
+Resultaten tyder på ett måttligt samband, men andra faktorer än ekonomi spelar sannolikt också en viktig roll.
+</p>
   `, true));
 }
