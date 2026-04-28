@@ -1,5 +1,6 @@
 import dbInfoOk, { displayDbNotOkText } from "./helpers/dbInfoOk.js";
 import { countyInfo } from "./helpers/dataLoader.js";
+import { COLORS, pageHero, statGrid, statCard, infoNote, analysisBox, lanChart } from "./helpers/components.js";
 
 
 addMdToPage(`

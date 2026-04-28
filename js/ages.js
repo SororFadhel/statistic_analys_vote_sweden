@@ -46,23 +46,6 @@ function correlationLabel(r) {
   return "svagt";
 }
 
-// Identifierar outliers med IQR-metoden
-function findOutliersIQR(values) {
-  const sorted = [...values].sort((a, b) => a - b);
-  const q1 = sorted[Math.floor((sorted.length - 1) * 0.25)];
-  const q3 = sorted[Math.floor((sorted.length - 1) * 0.75)];
-  const iqr = q3 - q1;
-  const lowerBound = q1 - 1.5 * iqr;
-  const upperBound = q3 + 1.5 * iqr;
-  return sorted.filter(v => v < lowerBound || v > upperBound);
-}
-
-// Gör första bokstaven i en text stor
-function capitalizeName(name) {
-  if (!name) return "";
-  return name.charAt(0).toUpperCase() + name.slice(1);
-}
-
 // ===============================
 // 🗂️ DATABEARBETNING
 // ===============================
@@ -87,7 +70,8 @@ function buildAgeGroups(dataset) {
 addMdToPage(`# Ålder och förändring i valresultat`);
 
 const allData = getCombinedData().filter(
-  d => d.age > 0 && !isNaN(d.avgVoteChange));
+  d => d.age > 0 && d.avgVoteChange !== 0
+);
 
 if (!allData.length) {
   addToPage(infoNote(
@@ -135,10 +119,6 @@ if (!allData.length) {
   );
   const isSignificant = Math.abs(tValue) >= 2;
 
-  // Identifiera outliers i röstförändring
-  const voteChanges = dataset.map(d => d.voteChangePercent);
-  const outliers = findOutliersIQR(voteChanges);
-
   // Statistikkort med nyckeltal
   addToPage(statGrid([
     statCard('Antal kommuner', dataset.length),
@@ -152,13 +132,6 @@ if (!allData.length) {
   // Inforuta om gruppering
   addToPage(infoNote(
     'Kommunerna delas in i tre lika stora grupper baserat på medelålder. <strong>Unga</strong> = lägsta tredjedelen, <strong>Medel</strong> = mellersta tredjedelen, <strong>Äldre</strong> = högsta tredjedelen.'
-  ));
-
-  // Inforuta om outliers
-  addToPage(infoNote(
-    `Vi har identifierat ${outliers.length} avvikande värden (outliers) i datan. ` +
-    `Outliers är extrema värden som ligger ovanför eller under det normala spannet för majoriteten av datapunkterna. ` +
-    `De behålls i analysen eftersom de representerar verkliga förhållanden i kommunerna och kan bidra till en mer komplett bild.`
   ));
 
   // Diagram 1 — Åldersgrupper vs röstförändring
@@ -185,18 +158,14 @@ if (!allData.length) {
 
   tableFromData({
     data: [
-      { Grupp: "Unga", Genomsnitt: formatNumber(youngAvg, 2), Standardavvikelse: formatNumber(youngStd, 2), Antal: young.length, Minimum: formatNumber(Math.min(...young.map(d => d.voteChangePercent)), 2), Maximum: formatNumber(Math.max(...young.map(d => d.voteChangePercent)), 2) },
-      { Grupp: "Medel", Genomsnitt: formatNumber(middleAvg, 2), Standardavvikelse: formatNumber(middleStd, 2), Antal: middle.length, Minimum: formatNumber(Math.min(...middle.map(d => d.voteChangePercent)), 2), Maximum: formatNumber(Math.max(...middle.map(d => d.voteChangePercent)), 2) },
-      { Grupp: "Äldre", Genomsnitt: formatNumber(oldAvg, 2), Standardavvikelse: formatNumber(oldStd, 2), Antal: old.length, Minimum: formatNumber(Math.min(...old.map(d => d.voteChangePercent)), 2), Maximum: formatNumber(Math.max(...old.map(d => d.voteChangePercent)), 2) }
+      { group: "Unga", avg: formatNumber(youngAvg, 2), std: formatNumber(youngStd, 2), count: young.length, min: formatNumber(Math.min(...young.map(d => d.voteChangePercent)), 2), max: formatNumber(Math.max(...young.map(d => d.voteChangePercent)), 2) },
+      { group: "Medel", avg: formatNumber(middleAvg, 2), std: formatNumber(middleStd, 2), count: middle.length, min: formatNumber(Math.min(...middle.map(d => d.voteChangePercent)), 2), max: formatNumber(Math.max(...middle.map(d => d.voteChangePercent)), 2) },
+      { group: "Äldre", avg: formatNumber(oldAvg, 2), std: formatNumber(oldStd, 2), count: old.length, min: formatNumber(Math.min(...old.map(d => d.voteChangePercent)), 2), max: formatNumber(Math.max(...old.map(d => d.voteChangePercent)), 2) }
     ]
   });
 
-  // Diagram 2 — Trend chart: Ålder vs röstförändring
+  // Diagram 2 — Scatter: Ålder vs röstförändring
   addMdToPage(`## Samband mellan ålder och röstförändring`);
-
-  const trendData = [...dataset]
-    .sort((a, b) => a.age - b.age)
-    .map(d => [d.age, d.voteChangePercent]);
 
   drawGoogleChart({
     type: "ScatterChart",
@@ -242,7 +211,7 @@ if (!allData.length) {
 
   tableFromData({
     data: dataset.slice(0, 10).map(d => ({
-      'Kommun': capitalizeName(d.kommun),
+      'Kommun': d.kommun,
       'Medelålder': d.age,
       'Röstförändring (%)': formatNumber(d.voteChangePercent, 2)
     }))
@@ -279,4 +248,3 @@ if (!allData.length) {
     }</p>
   `, true));
 }
-

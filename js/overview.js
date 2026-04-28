@@ -1,4 +1,5 @@
 import dbInfoOk, { displayDbNotOkText } from "./helpers/dbInfoOk.js";
+import { COLORS, pageHero, statGrid, statCard, infoNote, analysisBox, lanChart } from "./helpers/components.js";
 
 addMdToPage(`
   ## Kom igång!
@@ -25,6 +26,32 @@ else {
   tableFromData({ data: countyInfo });
   console.log('countyInfo', countyInfo);
 
+  addMdToPage(`
+  ### Arbetslöshet, från SQlite
+  Info om våra arbetslöshet i varje län, i procent. (Endast de 25 första av många poster.)
+  `);
+  dbQuery.use('counties-sqlite');
+  let unemployment = await dbQuery('SELECT * FROM arbetsloshet_by_lan');
+  tableFromData({ data: unemployment.slice(0, 25) });
+  console.log('unemployment', unemployment);
+
+  addMdToPage(`
+  ### Kommun i län, från SQlite
+  Info om kommunernas lägen i varje län. (Endast de 25 första av många poster.)
+  `);
+  dbQuery.use('counties-sqlite');
+  let lanKommun = await dbQuery('SELECT * FROM lan_kommun');
+  tableFromData({ data: lanKommun.slice(0, 25) });
+  console.log('lanKommun', lanKommun);
+
+  addMdToPage(`
+  ### Kommuninfo, från SQlite
+  Info om kommunernas egenskaper. (Endast de 25 första av många poster.)
+  `);
+  dbQuery.use('counties-sqlite');
+  let valdataKommun = await dbQuery('SELECT * FROM valdata_kommun');
+  tableFromData({ data: valdataKommun.slice(0, 25) });
+  console.log('valdataKommun', valdataKommun);
 
   addMdToPage(`
   ### Geografisk info, från MySQL

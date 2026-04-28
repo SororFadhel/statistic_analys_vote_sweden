@@ -84,7 +84,7 @@ function extractElectionRows(source) {
   return [];
 }
 
-// Bygger en map med valresultat per kommun (röster 2018, 2022 och procentuell förändring)
+// Bygger en map med valresultat per kommun (röster 2018, 2022 och förändring)
 function buildElectionMap(results) {
   const rows = extractElectionRows(results);
   const map = new Map();
@@ -102,11 +102,7 @@ function buildElectionMap(results) {
     item.roster2022 += r2022;
   }
   for (const item of map.values()) {
-    if (item.roster2018 === 0) {
-      item.voteChange = null;
-    } else {
-      item.voteChange = ((item.roster2022 - item.roster2018) / item.roster2018) * 100;
-    }
+    item.voteChange = item.roster2022 - item.roster2018;
   }
   return map;
 }
@@ -275,7 +271,6 @@ if (!dbInfoOk) {
 } else {
 
   const allMerged = mergeData();
-  window.allMerged = allMerged;
 
   // Hero-ruta överst på sidan
   addToPage(pageHero(
@@ -320,14 +315,14 @@ if (!dbInfoOk) {
     statCard('Antal kommuner', filtered.length),
     statCard('Genomsnittlig inkomst 2018 (tkr)', `${formatNumber(avgIncome2018, 1)} <span class="value-unit">tkr</span>`),
     statCard('Genomsnittlig inkomst 2022 (tkr)', `${formatNumber(avgIncome2022, 1)} <span class="value-unit">tkr</span>`),
-    statCard('Genomsnittlig förändring i röster %', formatNumber(avgVoteChange, 2) + ' %'),
+    statCard('Genomsnittlig förändring i röster', formatNumber(avgVoteChange, 1)),
     statCard('Arbetslöshet 2018 (länsnivå)', formatPercent(avgUnemployment2018, 1)),
     statCard('Arbetslöshet 2022 (länsnivå)', formatPercent(avgUnemployment2022, 1))
   ]));
 
   // Inforuta om länsnivå
   addToPage(infoNote(
-    'Arbetslöshetsdata är tillgänglig på <strong>länsnivå</strong>. Alla kommuner inom samma län delar samma värde. Förändring i röster är beräknad som procentuell förändring mellan riksdagsvalet 2018 och 2022.'
+    'Arbetslöshetsdata är tillgänglig på <strong>länsnivå</strong>. Alla kommuner inom samma län delar samma värde. Förändring i röster avser skillnaden i totalt antal röster per kommun mellan riksdagsvalet 2018 och 2022.'
   ));
 
   // Datapreview — visar de 10 första raderna
@@ -338,20 +333,15 @@ if (!dbInfoOk) {
     data: filtered.slice(0, 10).map(row => ({
       'Kommun': row.kommun,
       'Län': row.lan ?? '',
-      'Inkomst 2018': formatNumber(row.inkomst_2018, 1),
-      'Inkomst 2022': formatNumber(row.inkomst_2022, 1),
-      'Arbetslöshet 2018': row.arbetsloshet_2018 === null ? 'saknas' : formatPercent(row.arbetsloshet_2018, 1),
-      'Arbetslöshet 2022': row.arbetsloshet_2022 === null ? 'saknas' : formatPercent(row.arbetsloshet_2022, 1),
+      'Inkomst 2018 (tkr)': formatNumber(row.inkomst_2018, 1),
+      'Inkomst 2022 (tkr)': formatNumber(row.inkomst_2022, 1),
+      'Arbetslöshet 2018 (länsnivå)': row.arbetsloshet_2018 === null ? 'saknas' : formatPercent(row.arbetsloshet_2018, 1),
+      'Arbetslöshet 2022 (länsnivå)': row.arbetsloshet_2022 === null ? 'saknas' : formatPercent(row.arbetsloshet_2022, 1),
       'Röster 2018': row.roster2018,
       'Röster 2022': row.roster2022,
-      'Förändring i röster (%)': row.voteChange === null ? 'saknas' : formatNumber(row.voteChange, 2) + ' %'
+      'Förändring i röster (2018-2022)': toNumber(row.voteChange) ?? 0
     }))
   });
-
-  addToPage(infoNote(
-    'Inkomst anges i tkr (tusental kronor). Arbetslöshet är på länsnivå - alla kommuner inom samma län delar samma värde.'
-  ));
-  
 
   // Diagram 1 — inkomstintervall vs röstförändring med trendlinje
   addMdToPage(`## Samband mellan inkomst och förändring i röster`);
@@ -361,13 +351,13 @@ if (!dbInfoOk) {
   drawGoogleChart({
     type: 'LineChart',
     data: [
-      ['Inkomstintervall', 'Genomsnittlig förändring i röster (%)'],
+      ['Inkomstintervall', 'Genomsnittlig förändring i röster'],
       ...intervalData.map(d => [d.label, Math.round(d.avgVoteChange)])
     ],
     options: {
-      title: 'Inkomstintervall vs genomsnittlig förändring i röster (%)',
+      title: 'Inkomstintervall vs genomsnittlig förändring i röster',
       hAxis: { title: 'Inkomstintervall (tkr)' },
-      vAxis: { title: 'Genomsnittlig förändring i röster (%)' },
+      vAxis: { title: 'Genomsnittlig förändring i röster' },
       colors: [COLORS.primary],
       trendlines: { 0: { color: COLORS.secondary, lineWidth: 2 } },
       pointSize: 6,
@@ -384,13 +374,13 @@ if (!dbInfoOk) {
   drawGoogleChart({
     type: 'LineChart',
     data: [
-      ['Grupp', 'Genomsnittlig förändring i röster (%)'],
+      ['Grupp', 'Genomsnittlig förändring i röster'],
       ...groupData.map(d => [d.label, Math.round(d.avgVoteChange)])
     ],
     options: {
-      title: 'Inkomstgrupp vs genomsnittlig förändring i röster (%)',
+      title: 'Inkomstgrupp vs genomsnittlig förändring i röster',
       hAxis: { title: 'Inkomstgrupp' },
-      vAxis: { title: 'Genomsnittlig förändring i röster (%)' },
+      vAxis: { title: 'Genomsnittlig förändring i röster' },
       colors: [COLORS.primary],
       pointSize: 8,
       curveType: 'function',
@@ -401,7 +391,7 @@ if (!dbInfoOk) {
 
   // Diagram 3 — länsstapeldiagram med arbetslöshetsbadges
   addMdToPage(`## Förändring i röster per län — sorterat efter arbetslöshet`);
-  addMdToPage(`Varje stapel visar genomsnittlig procentuell förändring i röster per län.`);
+  addMdToPage(`Varje stapel visar genomsnittlig förändring i röster per län. Länens arbetslöshetsnivå visas som badge till höger.`);
   addToPage(lanChart(buildLanData(filtered), formatPercent));
 
   // Analysrutor — korrelation, analys, kausalitet, begränsningar, slutsats
@@ -443,10 +433,6 @@ if (!dbInfoOk) {
   `, true));
 
   addToPage(analysisBox('Slutsats', `
-    <p>
-Ekonomiska faktorer som inkomst och arbetslöshet verkar ha en viss koppling till förändringar i röster mellan 2018 och 2022.
-Sambanden är dock inte tillräckligt starka för att ensamma förklara utvecklingen.
-Resultaten tyder på ett måttligt samband, men andra faktorer än ekonomi spelar sannolikt också en viktig roll.
-</p>
+    <p>Ekonomiska faktorer som inkomst och arbetslöshet verkar ha en viss koppling till förändringar i röster mellan 2018 och 2022. Sambanden är dock inte tillräckligt starka för att ensamma förklara utvecklingen.</p>
   `, true));
 }
