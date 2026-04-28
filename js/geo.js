@@ -33,7 +33,7 @@ function interpretationText(r) {
   if (Math.abs(r) > 0.2) return "Måttligt samband";
   return "Svagt samband";
 }
-
+//computes the population standard deviation
 function std(arr) {
   if (arr.length === 0) return 0;
   const mean = average(arr);

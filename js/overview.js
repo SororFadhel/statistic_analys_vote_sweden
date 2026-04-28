@@ -32,8 +32,19 @@ else {
   `);
   dbQuery.use('counties-sqlite');
   let unemployment = await dbQuery('SELECT * FROM arbetsloshet_by_lan');
+  tableFromData({ 
+  data: unemployment.slice(0, 25).map(row => ({
+    ...row,
+    '2018': row['2018'] === null ? 'saknas' : row['2018'],
+    '2022': row['2022'] === null ? 'saknas' : row['2022']
+  }))
+  });
   tableFromData({ data: unemployment.slice(0, 25) });
   console.log('unemployment', unemployment);
+
+  addToPage(infoNote(
+  'Vissa län saknar arbetslöshetsdata för specifika kön eller år. Detta beror på att SCB inte mätte eller publicerade dessa värden. Gotlands län saknar mest data. Värden som saknas visas som "saknas" i tabellen.'
+  ));
 
   addMdToPage(`
   ### Kommun i län, från SQlite
