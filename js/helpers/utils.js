@@ -45,3 +45,12 @@ export function correlation(xs, ys) {
 
   return denX && denY ? num / Math.sqrt(denX * denY) : 0;
 }
+
+// ===============================
+// 📌 Standard Deviation
+// ===============================
+export function std(arr) {
+  if (arr.length === 0) return 0;
+  const mean = average(arr);
+  return Math.sqrt(arr.reduce((sum, x) => sum + (x - mean) ** 2, 0) / arr.length);
+}

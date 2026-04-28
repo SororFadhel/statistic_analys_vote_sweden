@@ -1,6 +1,6 @@
 import dbInfoOk, { displayDbNotOkText } from "./helpers/dbInfoOk.js";
 import { valdataKommun, geoData } from "./helpers/dataLoader.js";
-import { average, correlation } from "./helpers/utils.js";
+import { average, correlation, std } from "./helpers/utils.js";
 import { COLORS, pageHero, statGrid, statCard, infoNote, analysisBox } from "./helpers/components.js";
 
 function toNum(v) {
@@ -32,12 +32,6 @@ function interpretationText(r) {
   if (Math.abs(r) > 0.5) return "Starkt samband";
   if (Math.abs(r) > 0.2) return "Måttligt samband";
   return "Svagt samband";
-}
-
-function std(arr) {
-  if (arr.length === 0) return 0;
-  const mean = average(arr);
-  return Math.sqrt(arr.reduce((sum, x) => sum + (x - mean) ** 2, 0) / arr.length);
 }
 
 function indexGeoData(arr) {
