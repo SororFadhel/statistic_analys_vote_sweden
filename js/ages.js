@@ -239,12 +239,17 @@ if (!allData.length) {
   // Datapreview
   addMdToPage(`## Datapreview`);
   addMdToPage(`Här visas de första 10 raderna från datasetet.`);
+  addToPage(`<style>
+th:last-child {
+  text-align: right;
+}
+</style>`);
 
   tableFromData({
     data: dataset.slice(0, 10).map(d => ({
       'Kommun': capitalizeName(d.kommun),
       'Medelålder': d.age,
-      'Röstförändring (%)': formatNumber(d.voteChangePercent, 2)
+      'Röstförändring (%)': `<div style="text-align:right;">${formatNumber(d.voteChangePercent, 2)}</div>`
     }))
   });
 
