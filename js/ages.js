@@ -4,7 +4,7 @@ import { COLORS, pageHero, statGrid, statCard, infoNote, analysisBox } from "./h
 
 // ===============================
 // 🔧 HJÄLPFUNKTIONER
-// Små verktyg som används överallt i filen
+// Små verktyg som används överallt i filen.
 // ===============================
 
 // Standardavvikelse för en array
