@@ -39,8 +39,7 @@ else {
     '2022': row['2022'] === null ? 'saknas' : row['2022']
   }))
   });
-  tableFromData({ data: unemployment.slice(0, 25) });
-  console.log('unemployment', unemployment);
+    console.log('unemployment', unemployment);
 
   addToPage(infoNote(
   'Vissa län saknar arbetslöshetsdata för specifika kön eller år. Detta beror på att SCB inte mätte eller publicerade dessa värden. Gotlands län saknar mest data. Värden som saknas visas som "saknas" i tabellen.'
